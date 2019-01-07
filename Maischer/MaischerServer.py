@@ -54,7 +54,7 @@ class MaischerServer():
             jsonDict = { "Command" : command,
                          "SetPoint" : str(self.setPoint)}
             yield from websocket.send(json.dumps(jsonDict))
-        elif command == 'SetSetPoint':
+        elif 'SetSetPoint' in command:
             self.setPoint = float(command.split(' ')[1])
             print('New setPoint:' + self.setPoint)
             jsonDict = { "Command" : command,
@@ -65,7 +65,7 @@ class MaischerServer():
             jsonDict = { "Command" : command,
                          "SetPoint" : str(self.setPoint)}
             yield from websocket.send(json.dumps(jsonDict))
-        elif command == 'SetServoAngle':
+        elif 'SetServoAngle' in command:
             self.servoPosition = float(command.split(' ')[1])
             valid = self.servo.setAngle(self.servoPosition)
 
