@@ -14,7 +14,8 @@ class ServoHandler():
         GPIO.setup(servoPIN, GPIO.OUT)
 
         self.p = GPIO.PWM(servoPIN, 50) # GPIO xx for PWM with 50Hz
-        self.p.start(2.5) # Initialization        
+        self.p.start(2.5) # Initialization       
+        self.setDutyCyle(1) 
 
     def setDutyCyle(self,cycle):
         self.p.ChangeDutyCycle(cycle)
@@ -29,7 +30,7 @@ class ServoHandler():
         self.setDutyCyle(dutyCycle)
         return True
 
-class MaischServer():
+class MaischerServer():
     def __init__(self):
         self.setPoint = 0.0
         self.processValue = 0.0
@@ -73,8 +74,8 @@ class MaischServer():
             yield from websocket.send(json.dumps(jsonDict))            
 
 if __name__ == "__main__":
-    maischServer = MaischServer()
-    start_server = websockets.serve(maischServer.wsServer, '0.0.0.0', 8765)
+    MaischerServer = MaischerServer()
+    start_server = websockets.serve(MaischerServer.wsServer, '0.0.0.0', 7654)
 
     asyncio.get_event_loop().run_until_complete(start_server)
     asyncio.get_event_loop().run_forever()

@@ -6,17 +6,25 @@
       <script type = "text/javascript">
         window.onload = function() {
             if ("WebSocket" in window) {
-               // Let us open a web socket
-               var ws = new WebSocket("ws://192.168.178.18:8765");
-               ws.onopen = function() {};                   // Web Socket is connected, send data using send()
-               ws.onmessage = function(evt) {
+              // Let us open a web socket
+              var ws = new WebSocket("ws://localhost:7654");
+              ws.onopen = function() {
+                WebSocket_SendGetSetPoint()
+              };                   // Web Socket is connected, send data using send()
+              ws.onmessage = function(evt) {
                   var received_msg = evt.data;
                   var jsonobj = JSON.parse(received_msg)                  
-                  if (jsonobj.Command == "GetDatabases"){
-                    WebSocket_HandleGetSetPointAnswer(jsonobj)
-                  }
-               };
-               ws.onclose = function() { };
+
+                  var commandHandlerMap = {
+                     "GetSetPoint": WebSocket_HandleGetSetPointAnswer,
+                  };      
+
+                  commandHandlerMap[jsonobj.Command](jsonobj)
+              };
+
+              ws.onclose = function() { 
+
+              };
             } else {
               // The browser doesn't support WebSocket
               alert("WebSocket NOT supported by your Browser!");
@@ -43,31 +51,13 @@
                selectList.appendChild(option);
            }
         }
-         window.onload = function() {
-            var ctx = document.getElementById("myChart").getContext('2d');
-            ctx.height = 500;
-            window.myLine = new Chart(ctx, ChartConfig);   
-
-            WebSocket_GetDatabases();
-         };
       </script>
-		
    </head>
-   
    <body>
       <form action="/action_page.php">
       Set Point: <input type="text" name="SetPoint" value="0.0">
       <input type="submit" value="Submit">
       </form>
-      <div id = "sse">
-
-         <p>The select element defines a drop-down list:</p>
-         <form id="myDiv">
-           <input id="DatabasesElement">
-           <br><br>
-           <input id="clickMe" type="button" value="Open Database" onclick="WebSocket_OpenDatabase();" />
-         </form>         
-      </div>
       <div style="height: 300px">
          <canvas id="myChart"></canvas>
       </div>      
