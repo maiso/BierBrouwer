@@ -1,0 +1,297 @@
+<!DOCTYPE HTML>
+
+<html>
+   <head>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.bundle.js"></script>
+      <script type = "text/javascript">
+         window.chartColors = {
+            red: 'rgb(255, 99, 132)',
+            orange: 'rgb(255, 159, 64)',
+            yellow: 'rgb(255, 205, 86)',
+            green: 'rgb(75, 192, 192)',
+            blue: 'rgb(54, 162, 235)',
+            purple: 'rgb(153, 102, 255)',
+            grey: 'rgb(201, 203, 207)'
+         };         
+         var ChartConfig = {
+                         // The type of chart we want to create
+                         type: 'line',
+
+                         // The data for our dataset
+                         data: { datasets: [] },
+
+                         // Configuration options go here
+                         options: {
+                           maintainAspectRatio: false,
+                           responsive: true,
+                           title: {
+                              display: true,
+                              text: 'Chart.js Line Chart'
+                           },
+                           tooltips: {
+                              enabled: false,
+                              mode: 'index',
+                              intersect: false,
+                           },    
+                           elements: {
+                                      point:{
+                                          radius: 0
+                                      }
+                                  },                       
+                           scales: {
+                                 xAxes: [{
+                                                type: 'time',
+                                                time: {
+                                                     unit: 'minute',
+                                                      displayFormats: {
+                                                         minute: 'MMM D HH:mm:ss'
+                                                     }                                                     
+                                                },
+                                                ticks: {
+                                                        autoSkip: true,
+                                                        maxTicksLimit: 20
+                                                    }                                                 
+                                             }],                                
+                                 yAxes: [{
+                                          display: true,
+                                          scaleLabel: {
+                                             display: true,
+                                             labelString: 'Temperatuur'
+                                          },
+                                        //   ticks: {
+                                        //     beginAtZero: true,
+                                        //     steps: 10,
+                                        //     stepValue: 5,
+                                        //     max: 40,
+                                        //     labelString: 'Temperatuur'
+                                        // }                                          
+                                       }],
+                                  
+                            },
+                         }
+                     };
+         var colorNames = Object.keys(window.chartColors);
+
+         function simple_moving_averager(period) {
+             var nums = [];
+             return function(num) {
+                 nums.push(num);
+                 if (nums.length > period)
+                     nums.splice(0,1);  // remove the first element of the array
+                 var sum = 0;
+                 for (var i in nums)
+                     sum += nums[i];
+                 var n = period;
+                 if (nums.length < period)
+                     n = nums.length;
+                 return(sum/n);
+             }
+         }
+         var sma_day = simple_moving_averager(1440);
+         function WebSocket_GetRows(NumberOfRows) {
+            
+            if ("WebSocket" in window) {
+               // Let us open a web socket
+               var ws = new WebSocket("ws://192.168.178.18:8765");
+            
+               var minRow = Math.min(0, parseInt(NumberOfRows) - 2880 ); //2Days
+               var cmd = "GetRows " + minRow.toString() + " " + NumberOfRows
+               console.log(cmd)
+
+               ws.onopen = function() { ws.send(cmd); };                   // Web Socket is connected, send data using send()
+            
+               ws.onmessage = function (evt) { 
+                  var received_msg = evt.data;
+                  // alert("Message is received..." + received_msg);
+
+                  var jsonobj = JSON.parse(received_msg)
+                  // console.log(jsonobj);
+                  if (jsonobj.Command == "GetRows")
+                  {
+                     //for (var i = 0; i < 5; i++) {
+                     var BinnenTemperatuur = []
+                     var BuitenTemperatuur = []
+                     var avgArray = []
+//                     var labels = []
+                     for (var i = 0, meting; i < jsonobj.Rows.length; i++) {
+                        meting = jsonobj.Rows[i];
+
+                        BinnenTemperatuur.push({
+                                              x: new Date(meting.date), //parseInt(i), // 
+                                              y: parseFloat(meting.BinnenTemp)
+                                          });
+
+                        BuitenTemperatuur.push({
+                                              x: new Date(meting.date), //parseInt(i), // 
+                                              y: parseFloat(meting.BuitenTemp)
+                                          });
+
+                        
+                        // var sum = 0;
+                        // for( var i = 0; i < BinnenTemperatuur.length; i++ ){
+                        //     sum += parseInt( BinnenTemperatuur[i].y, 10 ); //don't forget to add the base
+                        // }
+
+                        // var avg = sum/BinnenTemperatuur.length;
+                        avgArray.push({
+                                              x: new Date(meting.date),
+                                              y: sma_day(BinnenTemperatuur[i].y)
+                                          })
+                     }
+                     //console.log(BinnenTemperatuur.length);
+
+                     var colorName = colorNames[ChartConfig.data.datasets.length % colorNames.length];
+                     var newColor = window.chartColors[colorName];
+                     var newDataset = {
+                        label: 'Binnen Temperatuur',
+                        //labels: labels,
+                        backgroundColor: newColor,
+                        borderColor: newColor,
+                        data: BinnenTemperatuur,
+                        fill: false
+                     };
+
+                     ChartConfig.data.datasets.push(newDataset);
+
+                     var colorName = colorNames[ChartConfig.data.datasets.length % colorNames.length];
+                     var newColor = window.chartColors[colorName];
+                     var newDataset2 = {
+                        label: 'Buiten Temperatuur',
+                        //labels: labels,
+                        backgroundColor: newColor,
+                        borderColor: newColor,
+                        data: BuitenTemperatuur,
+                        fill: false
+                     };                     
+                     ChartConfig.data.datasets.push(newDataset2);
+
+                     var colorName = colorNames[ChartConfig.data.datasets.length % colorNames.length];
+                     var newColor = window.chartColors[colorName];
+                     var newDataset3 = {
+                        label: 'Gemiddelde Binnen Temperatuur',
+                        //labels: labels,
+                        backgroundColor: newColor,
+                        borderColor: newColor,
+                        data: avgArray,
+                        fill: false
+                     };                     
+                     ChartConfig.data.datasets.push(newDataset3);
+                     //console.log(ChartConfig.data.datasets);
+                     window.myLine.update();
+                  }
+               };
+            
+            
+
+               ws.onclose = function() { };
+            } else {
+               alert("WebSocket NOT supported by your Browser!");
+            }
+         }
+
+         function WebSocket_OpenDatabase() 
+         {
+            
+            if ("WebSocket" in window) {
+               var selectList = document.getElementById("DatabasesElement");
+               var selectedDatabase = selectList.options[selectList.selectedIndex].text;
+
+               // Let us open a web socket
+               var ws = new WebSocket("ws://192.168.178.18:8765");
+            
+               ws.onopen = function() { ws.send("OpenDatabase " + selectedDatabase); };                   // Web Socket is connected, send data using send()
+            
+               ws.onmessage = function (evt) { 
+                  var received_msg = evt.data;
+                  //alert("Message is received..." + received_msg);
+
+                  var jsonobj = JSON.parse(received_msg)
+                  if (jsonobj.Command == "OpenDatabase")
+                  {
+                     //Create and append select list
+                     var myDiv = document.getElementById("myDiv");
+
+                     var nrOfEntries = document.createElement("p");
+                     nrOfEntries.setAttribute("id", "nrOfEntries");
+                     myDiv.appendChild(nrOfEntries);
+                     document.getElementById("nrOfEntries").textContent = "There are " + jsonobj.NumberOfRows + " Rows";
+
+                     WebSocket_GetRows(jsonobj.NumberOfRows);
+                  }
+               };
+            
+            
+
+               ws.onclose = function() { };
+            } else {
+               alert("WebSocket NOT supported by your Browser!");
+            }
+         }
+
+         function WebSocket_GetDatabases() {
+            
+            if ("WebSocket" in window) {
+               // Let us open a web socket
+               var ws = new WebSocket("ws://192.168.178.18:8765");
+				
+               ws.onopen = function() { ws.send("GetDatabases"); };                   // Web Socket is connected, send data using send()
+				
+               ws.onmessage = function (evt) { 
+                  var received_msg = evt.data;
+                  //alert("Message is received..." + received_msg);
+
+                  var jsonobj = JSON.parse(received_msg)
+                  if (jsonobj.Command == "GetDatabases")
+                  {
+                     var selectList = document.getElementById("DatabasesElement");
+                     selectList.onchange = function(){RetreiveDatabase};
+                     //Create and append select list
+                     //var selectList = document.createElement("select");
+                     //selectList.setAttribute("id", "mySelect");
+                     //myDiv.appendChild(selectList);
+
+                     //Create and append the options
+                     for (var i = 0; i < jsonobj.Databases.length; i++) {
+                         var option = document.createElement("option");
+                         option.setAttribute("value", jsonobj.Databases[i]);
+                         option.text = jsonobj.Databases[i];
+                         selectList.appendChild(option);
+                     }
+                  }
+               };
+				
+            
+
+               ws.onclose = function() { };
+            } else {
+              
+               // The browser doesn't support WebSocket
+               alert("WebSocket NOT supported by your Browser!");
+            }
+         }
+
+         window.onload = function() {
+            var ctx = document.getElementById("myChart").getContext('2d');
+            ctx.height = 500;
+            window.myLine = new Chart(ctx, ChartConfig);   
+
+            WebSocket_GetDatabases();
+         };
+      </script>
+		
+   </head>
+   
+   <body>
+      <div id = "sse">
+         <p>The select element defines a drop-down list:</p>
+         <form id="myDiv">
+           <select id="DatabasesElement">
+           <br><br>
+           <input id="clickMe" type="button" value="Open Database" onclick="WebSocket_OpenDatabase();" />
+         </form>         
+      </div>
+      <div style="height: 300px">
+         <canvas id="myChart"></canvas>
+      </div>      
+   </body>
+</html>
