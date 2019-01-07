@@ -7,77 +7,52 @@
       <script type = "text/javascript">
         var ws;
         var wsConnected = false
+
         function WebSocket_GetSetPoint(){
-          if (wsConnected == true){
-            ws.send("GetSetPoint");
-          }else{
-            alert("wsConnected == false")
+          var handleGetSetPointAnswer = function (jsonobj) {
+            document.getElementById("SetPoint").value = jsonobj.SetPoint
           }
+          WebSocketClient("GetSetPoint",handleGetSetPointAnswer)
         }
 
         function WebSocket_SetSetPoint(){
-          if (wsConnected == true){
-            var setPoint = document.getElementById("SetPoint").value;          
-            alert("SetSetPoint " + setPoint)
-            ws.send("SetSetPoint " + setPoint);
-          }else{
-            alert("wsConnected == false")
+          var setPoint = document.getElementById("SetPoint").value;          
+          alert("SetSetPoint " + setPoint)
+
+          var handleSetSetPointAnswer = function (jsonobj) {
+            alert("SetSetPoint to " + jsonobj.SetPoint)
           }
+          WebSocketClient("SetSetPoint " + setPoint,handleSetSetPointAnswer)
         }
 
-        window.onload = function() {
-           alert("Reload")
-            if ("WebSocket" in window) {
-              var currentSetPoint = 0.0;
+        function WebSocketClient(commandToSend,messageHandler) {
+          if ("WebSocket" in window) {
+            // Let us open a web socket
+            ws = new WebSocket("ws://192.168.178.21:7654");
+            ws.onopen = function() {
+              ws.send(commandToSend);
+            };                   // Web Socket is connected, send data using send()
+            ws.onmessage = function(evt) {
+                var received_msg = evt.data;
+                alert(received_msg)
+                var jsonobj = JSON.parse(received_msg)                  
+                messageHandler(jsonobj)
+            };
 
-              var handleGetSetPointAnswer = function (jsonobj) {
-                currentSetPoint = jsonobj.SetPoint;
-                alert(currentSetPoint)
-              }
+            ws.onclose = function() { 
+            };
 
-              var handleSetSetPointAnswer = function (jsonobj) {
-                currentSetPoint = jsonobj.SetPoint;
-                alert(currentSetPoint)
-              }        
-
-              // Let us open a web socket
-              ws = new WebSocket("ws://192.168.178.21:7654");
-              ws.onopen = function() {
-                wsConnected = true
-              };                   // Web Socket is connected, send data using send()
-              ws.onmessage = function(evt) {
-                  var received_msg = evt.data;
-                  alert(received_msg)
-                  var jsonobj = JSON.parse(received_msg)                  
-
-                  var commandHandlerMap = {
-                     "GetSetPoint" : handleGetSetPointAnswer,
-                     "SetSetPoint" : handleSetSetPointAnswer,
-                  };      
-
-                  commandHandlerMap[jsonobj.Command](jsonobj)
-              };
-
-              ws.onclose = function() { 
-                wsConnected = false
-              };
-
-              ws.onerror = function(evt) {
-                alert('ws normal error: ' + evt.type);
-              };
-
-              var updateSpPv = function(){
-                if (wsConnected == true){
-                  WebSocket_GetSetPoint()  
-                }            
-              }
-
-              var intervalID = setInterval(updateSpPv, 1000);
-              
-            } else {
+            ws.onerror = function(evt) {
+              alert('ws normal error: ' + evt.type);
+            };  
+          } else {
               // The browser doesn't support WebSocket
               alert("WebSocket NOT supported by your Browser!");
-            }            
+          }                       
+        }
+        window.onload = function() {
+            alert("Reload")
+            var intervalID = setInterval(WebSocket_GetSetPoint, 10000);
         };
       </script>
    </head>
