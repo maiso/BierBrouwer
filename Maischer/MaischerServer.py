@@ -56,7 +56,6 @@ class MaischerServer():
             yield from websocket.send(json.dumps(jsonDict))
         elif 'SetSetPoint' in command:
             self.setPoint = float(command.split(' ')[1])
-            print('New setPoint:' + self.setPoint)
             jsonDict = { "Command" : command,
                          "SetPoint" : str(self.setPoint)}
             yield from websocket.send(json.dumps(jsonDict))
