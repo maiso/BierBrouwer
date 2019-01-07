@@ -2,62 +2,90 @@
 
 <html>
    <head>
+      <meta charset="utf-8"/>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.bundle.js"></script>
       <script type = "text/javascript">
+        var ws;
+        var wsConnected = false
+        function WebSocket_GetSetPoint(){
+          if (wsConnected == true){
+            ws.send("GetSetPoint");
+          }else{
+            alert("wsConnected == false")
+          }
+        }
+
+        function WebSocket_SetSetPoint(){
+          if (wsConnected == true){
+            var setPoint = document.getElementById("SetPoint").value;          
+            alert("SetSetPoint " + setPoint)
+            ws.send("SetSetPoint " + setPoint);
+          }else{
+            alert("wsConnected == false")
+          }
+        }
+
         window.onload = function() {
+           alert("Reload")
             if ("WebSocket" in window) {
+              var currentSetPoint = 0.0;
+
+              var handleGetSetPointAnswer = function (jsonobj) {
+                currentSetPoint = jsonobj.SetPoint;
+                alert(currentSetPoint)
+              }
+
+              var handleSetSetPointAnswer = function (jsonobj) {
+                currentSetPoint = jsonobj.SetPoint;
+                alert(currentSetPoint)
+              }        
+
               // Let us open a web socket
-              var ws = new WebSocket("ws://localhost:7654");
+              ws = new WebSocket("ws://192.168.178.21:7654");
               ws.onopen = function() {
-                WebSocket_SendGetSetPoint()
+                wsConnected = true
               };                   // Web Socket is connected, send data using send()
               ws.onmessage = function(evt) {
                   var received_msg = evt.data;
+                  alert(received_msg)
                   var jsonobj = JSON.parse(received_msg)                  
 
                   var commandHandlerMap = {
-                     "GetSetPoint": WebSocket_HandleGetSetPointAnswer,
+                     "GetSetPoint" : handleGetSetPointAnswer,
+                     "SetSetPoint" : handleSetSetPointAnswer,
                   };      
 
                   commandHandlerMap[jsonobj.Command](jsonobj)
               };
 
               ws.onclose = function() { 
-
+                wsConnected = false
               };
+
+              ws.onerror = function(evt) {
+                alert('ws normal error: ' + evt.type);
+              };
+
+              var updateSpPv = function(){
+                if (wsConnected == true){
+                  WebSocket_GetSetPoint()  
+                }            
+              }
+
+              var intervalID = setInterval(updateSpPv, 1000);
+              
             } else {
               // The browser doesn't support WebSocket
               alert("WebSocket NOT supported by your Browser!");
             }            
         };
-
-        function WebSocket_SendGetSetPoint(){
-          ws.send("GetSetPoint");
-        }
-
-        function WebSocket_HandleGetSetPointAnswer(jsonobj) {
-           var selectList = document.getElementById("DatabasesElement");
-           selectList.onchange = function(){RetreiveDatabase};
-           //Create and append select list
-           //var selectList = document.createElement("select");
-           //selectList.setAttribute("id", "mySelect");
-           //myDiv.appendChild(selectList);
-
-           //Create and append the options
-           for (var i = 0; i < jsonobj.Databases.length; i++) {
-               var option = document.createElement("option");
-               option.setAttribute("value", jsonobj.Databases[i]);
-               option.text = jsonobj.Databases[i];
-               selectList.appendChild(option);
-           }
-        }
       </script>
    </head>
    <body>
-      <form action="/action_page.php">
-      Set Point: <input type="text" name="SetPoint" value="0.0">
-      <input type="submit" value="Submit">
-      </form>
+    <div>
+      Set Point: <input type="number" step="1" id="SetPoint" value="0.0">
+      <input type="submit" value="Submit" onclick="WebSocket_SetSetPoint();" />
+     </div>
       <div style="height: 300px">
          <canvas id="myChart"></canvas>
       </div>      

@@ -36,7 +36,7 @@ class MaischerServer():
         self.processValue = 0.0
         self.servoPosition = 0.0
 
-        self.servo = ServoHandler(23)
+        self.servo = ServoHandler(23) # Pin number
 
         self.thread = threading.Thread(target=self.run, args=())
         self.thread.daemon = True                            # Daemonize thread
