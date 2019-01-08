@@ -7,44 +7,62 @@
       <script type = "text/javascript">
         function WebSocket_GetSetPoint(){
           var handleGetSetPointAnswer = function (jsonobj) {
-            document.getElementById("SetPoint").value = jsonobj.SetPoint
+            document.getElementById("TemperatuurPV").value = jsonobj.SetPoint
           }
           WebSocketClient("GetSetPoint",handleGetSetPointAnswer)
         }
 
-        function WebSocket_SetSetPoint(){
-          var setPoint = document.getElementById("SetPoint").value;          
-          //alert("SetSetPoint " + setPoint)
+        function WebSocket_SetTemperatuur(){
+          var setPoint = document.getElementById("TemperatuurSP").value;          
+          //alert("SetTemperatuur " + setPoint)
 
-          var handleSetSetPointAnswer = function (jsonobj) {
-            alert("SetSetPoint to " + jsonobj.SetPoint)
+          var handleSetTemperatuurAnswer = function (jsonobj) {
+            document.getElementById("TemperatuurSP").value = jsonobj.SetPoint
           }
-          WebSocketClient("SetSetPoint " + setPoint,handleSetSetPointAnswer)
+          WebSocketClient("SetTemperatuur " + setPoint,handleSetTemperatuurAnswer)
         }
 
-        function WebSocket_GetProcessValue(){
-          var handleGetProcessValueAnswer = function (jsonobj) {
-            document.getElementById("ProcessValue").value = jsonobj.ProcessValue
+        function WebSocket_GetTemperatuur(){
+          var handleGetTemperatuurAnswer = function (jsonobj) {
+            document.getElementById("TemperatuurPV").value = jsonobj.ProcessValue
           }
-          WebSocketClient("GetProcessValue",handleGetProcessValueAnswer)
+          WebSocketClient("GetTemperatuur",handleGetTemperatuurAnswer)
         }
 
         function WebSocket_GetServoAngle(){
           var handleGetServoAngleAnswer = function (jsonobj) {
-            document.getElementById("ServoAngle").value = jsonobj.ServoAngle
+            document.getElementById("ServoAnglePV").value = jsonobj.ServoAngle
           }
           WebSocketClient("GetServoAngle",handleGetServoAngleAnswer)
         }
 
         function WebSocket_SetServoAngle(){
-          var servoAngle = document.getElementById("ServoAngle").value;          
+          var servoAngle = document.getElementById("ServoAngleSP").value;          
           //alert("ServoAngle " + servoAngle)
 
           var handleSetServoAngleAnswer = function (jsonobj) {
-            alert("SetServoAngle to " + jsonobj.ServoAngle)
+            document.getElementById("ServoAngleSP").value = jsonobj.ServoAngle
           }
           WebSocketClient("SetServoAngle " + servoAngle,handleSetServoAngleAnswer)
         }
+
+        function WebSocket_SetMinOutputAngle(){
+          var servoAngle = document.getElementById("ServoAngleSP").value;          
+
+          var handleSetMinOutputAngleAnswer = function (jsonobj) {
+            document.getElementById("MinOutputAngle").value = jsonobj.MinOutputAngle
+          }
+          WebSocketClient("SetMinOutputAngle " + servoAngle,handleSetMinOutputAngleAnswer)
+        }   
+
+        function WebSocket_SetMaxOutputAngle(){
+          var servoAngle = document.getElementById("ServoAngleSP").value;          
+
+          var handleSetMaxOutputAngleAnswer = function (jsonobj) {
+            document.getElementById("MaxOutputAngle").value = jsonobj.MaxOutputAngle
+          }
+          WebSocketClient("SetMaxOutputAngle " + servoAngle,handleSetMaxOutputAngleAnswer)
+        } 
 
         function WebSocketClient(commandToSend,messageHandler) {
           if ("WebSocket" in window) {
@@ -75,29 +93,35 @@
             alert("Reload")
 
             WebSocket_GetSetPoint()
-            WebSocket_GetProcessValue()
+            WebSocket_GetTemperatuur()
             WebSocket_GetServoAngle()
 
             var intervalID = setInterval(WebSocket_GetSetPoint, 5000);
-            var intervalID = setInterval(WebSocket_GetProcessValue, 5000);
-            var intervalID2 = setInterval(WebSocket_GetServoAngle, 5000);
+            var intervalID = setInterval(WebSocket_GetTemperatuur, 5000);
+            var intervalID = setInterval(WebSocket_GetServoAngle, 5000);
         };
       </script>
    </head>
    <body>
       <div>
-        Set Point: <input type="number" step="0.1" id="SetPoint" value="0.0">
-        <input type="submit" value="Submit" onclick="WebSocket_SetSetPoint();" />
+        Temperatuur: 
+        Process Value: <input readonly type="number" id="TemperatuurPV" value="0.0"> 
+        SetPoint     : <input type="number" step="0.1" id="TemperatuurSP" value="0.0">
+        <input type="submit" value="Submit" onclick="WebSocket_SetTemperatuur();" />
       </div>
       <div>
-        Process Value: <input readonly type="number" id="ProcessValue" value="0.0">
+        Servo Angle: 
+        Process Value: <input readonly type="number" id="ServoAnglePV" value="0"> 
+        SetPoint     : <input type="number" step="1" id="ServoAngleSP" value="1">
+        <input type="submit" value="Submit" onclick="WebSocket_SetServoAngle();" />
       </div>      
       <div>
-        Servo Angle: <input type="number" step="1" min=1 max=180 id="ServoAngle" value="0">
-        <input type="submit" value="Submit" onclick="WebSocket_SetServoAngle();" />
-        <input type="submit" value="+" onclick="WebSocket_IncreaseServoAngle();" />
-        <input type="submit" value="-" onclick="WebSocket_DecreaseServoAngle();" />
-      </div>      
+        Servo Angle Min and Max Output: 
+        MinOutputAngle: <input readonly type="number" id="MinOutputAngle" value="0"> 
+        <input type="submit" value="Set as 0%" onclick="WebSocket_SetMinOutputAngle();" />
+        MaxOutputAngle: <input readonly type="number" id="MaxOutputAngle" value="0">
+        <input type="submit" value="Set as 100%" onclick="WebSocket_SetMaxOutputAngle(();" />
+      </div>            
       <div style="height: 300px">
          <canvas id="myChart"></canvas>
       </div>      

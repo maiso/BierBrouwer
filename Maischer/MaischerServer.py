@@ -27,7 +27,7 @@ class ServoHandler():
         if angle < 0 or angle > 180:
             return False
 
-        dutyCycle = angle / (180 / 12.5)
+        dutyCycle = angle / (180 / 11)
         print("setDutyCycle " + str(dutyCycle))
         self.setDutyCyle(dutyCycle)
         return True
@@ -37,7 +37,8 @@ class MaischerServer():
         self.setPoint = 0.0
         self.processValue = 0.0
         self.servoAngle = 0
-
+        self.MinOutputAngle = 1
+        self.MaxOutputAngle = 180
         self.servo = ServoHandler(23) # Pin number
 
         self.thread = threading.Thread(target=self.run, args=())
@@ -63,7 +64,7 @@ class MaischerServer():
             jsonDict = { "Command" : command,
                          "SetPoint" : str(self.setPoint)}
             yield from websocket.send(json.dumps(jsonDict))
-        elif 'SetSetPoint' in command:
+        elif 'SetTemperatuur' in command:
             receivedSetPoint = float(command.split(' ')[1])
             if receivedSetPoint < 0:
                 receivedSetPoint = 0
@@ -77,8 +78,7 @@ class MaischerServer():
 
         ####################################################
         ## Process Value
-        elif command == 'GetProcessValue':
-            self.processValue = float(command.split(' ')[1])
+        elif command == 'GetTemperatuur':
             jsonDict = { "Command" : command,
                          "ProcessValue" : str(self.processValue)}
             yield from websocket.send(json.dumps(jsonDict))
@@ -98,6 +98,19 @@ class MaischerServer():
                          "Valid"   : str(valid),
                          "ServoAngle" : str(self.servoAngle)}
             yield from websocket.send(json.dumps(jsonDict))            
+        ####################################################
+        ## Output
+        elif 'SetMinOutputAngle' in command:
+            self.MinOutputAngle = float(command.split(' ')[1])
+            jsonDict = { "Command" : command,
+                         "MinOutputAngle" : str(self.MinOutputAngle)}
+            yield from websocket.send(json.dumps(jsonDict))
+        elif 'SetMaxOutputAngle' in command:
+            self.MaxOutputAngle = float(command.split(' ')[1])
+            jsonDict = { "Command" : command,
+                         "MaxOutputAngle" : str(self.MaxOutputAngle)}
+            yield from websocket.send(json.dumps(jsonDict))
+
 
 if __name__ == "__main__":
     MaischerServer = MaischerServer()
