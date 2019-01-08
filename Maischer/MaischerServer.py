@@ -34,7 +34,7 @@ class MaischerServer():
     def __init__(self):
         self.setPoint = 0.0
         self.processValue = 0.0
-        self.servoPosition = 0.0
+        self.servoAngle = 0
 
         self.servo = ServoHandler(23) # Pin number
 
@@ -55,7 +55,13 @@ class MaischerServer():
                          "SetPoint" : str(self.setPoint)}
             yield from websocket.send(json.dumps(jsonDict))
         elif 'SetSetPoint' in command:
-            self.setPoint = float(command.split(' ')[1])
+            receivedSetPoint = float(command.split(' ')[1])
+            if receivedSetPoint < 0:
+                receivedSetPoint = 0
+            if receivedSetPoint > 100:
+                receivedSetPoint = 100
+
+            self.setPoint = receivedSetPoint
             jsonDict = { "Command" : command,
                          "SetPoint" : str(self.setPoint)}
             yield from websocket.send(json.dumps(jsonDict))
@@ -64,13 +70,20 @@ class MaischerServer():
             jsonDict = { "Command" : command,
                          "SetPoint" : str(self.setPoint)}
             yield from websocket.send(json.dumps(jsonDict))
+
+        ## Servo Angle
+        elif 'GetServoAngle' in comamnd:
+            jsonDict = { "Command" : command,
+                         "ServoAngle" : str(self.servoAngle)}
+            yield from websocket.send(json.dumps(jsonDict))
+
         elif 'SetServoAngle' in command:
-            self.servoPosition = float(command.split(' ')[1])
-            valid = self.servo.setAngle(self.servoPosition)
+            self.servoAngle = float(command.split(' ')[1])
+            valid = self.servo.setAngle(self.servoAngle)
 
             jsonDict = { "Command" : command,
                          "Valid"   : str(valid),
-                         "ServoAngle" : str(self.servoPosition)}
+                         "ServoAngle" : str(self.servoAngle)}
             yield from websocket.send(json.dumps(jsonDict))            
 
 if __name__ == "__main__":

@@ -25,6 +25,23 @@
           WebSocketClient("SetSetPoint " + setPoint,handleSetSetPointAnswer)
         }
 
+        function WebSocket_GetServoAngle(){
+          var handleGetServoAngleAnswer = function (jsonobj) {
+            document.getElementById("ServoAngle").value = jsonobj.ServoAngle
+          }
+          WebSocketClient("GetServoAngle",handleGetServoAngleAnswer)
+        }
+
+        function WebSocket_SetServoAngle(){
+          var servoAngle = document.getElementById("ServoAngle").value;          
+          alert("ServoAngle " + servoAngle)
+
+          var handleSetServoAngleAnswer = function (jsonobj) {
+            alert("SetServoAngle to " + jsonobj.ServoAngle)
+          }
+          WebSocketClient("SetServoAngle " + servoAngle,handleSetServoAngleAnswer)
+        }
+
         function WebSocketClient(commandToSend,messageHandler) {
           if ("WebSocket" in window) {
             // Let us open a web socket
@@ -52,15 +69,26 @@
         }
         window.onload = function() {
             alert("Reload")
+
+            WebSocket_GetSetPoint()
+            WebSocket_GetServoAngle()
+
             var intervalID = setInterval(WebSocket_GetSetPoint, 10000);
+            var intervalID2 = setInterval(WebSocket_GetServoAngle, 10000);
         };
       </script>
    </head>
    <body>
-    <div>
-      Set Point: <input type="number" step="1" id="SetPoint" value="0.0">
-      <input type="submit" value="Submit" onclick="WebSocket_SetSetPoint();" />
-     </div>
+      <div>
+        Set Point: <input type="number" step="0.1" id="SetPoint" value="0.0">
+        <input type="submit" value="Submit" onclick="WebSocket_SetSetPoint();" />
+      </div>
+      <div>
+        Servo Angle: <input type="number" step="1" min= 0 max=100 id="ServoAngle" value="0">
+        <input type="submit" value="Submit" onclick="WebSocket_SetServoAngle();" />
+        <input type="submit" value="+" onclick="WebSocket_IncreaseServoAngle();" />
+        <input type="submit" value="-" onclick="WebSocket_DecreaseServoAngle();" />
+      </div>      
       <div style="height: 300px">
          <canvas id="myChart"></canvas>
       </div>      
