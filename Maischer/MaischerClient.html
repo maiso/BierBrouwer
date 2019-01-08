@@ -64,6 +64,14 @@
           WebSocketClient("SetMaxOutputAngle " + servoAngle,handleSetMaxOutputAngleAnswer)
         } 
 
+        function WebSocket_SetOutput(){
+          var setPoint = document.getElementById("OutputSP").value;          
+          var handleSetOutputAnswer = function (jsonobj) {
+            document.getElementById("OutputSP").value = jsonobj.Output
+          }
+          WebSocketClient("SetOutput " + setPoint,handleSetOutputAnswer)
+        }
+
         function WebSocketClient(commandToSend,messageHandler) {
           if ("WebSocket" in window) {
             // Let us open a web socket
@@ -117,11 +125,17 @@
       </div>      
       <div>
         Servo Angle Min and Max Output: 
-        MinOutputAngle: <input readonly type="number" id="MinOutputAngle" value="0"> 
-        <input type="submit" value="Set as 0%" onclick="WebSocket_SetMinOutputAngle();" />
-        MaxOutputAngle: <input readonly type="number" id="MaxOutputAngle" value="0">
-        <input type="submit" value="Set as 100%" onclick="WebSocket_SetMaxOutputAngle(();" />
-      </div>            
+        <br>
+        MinOutputAngle: <input readonly type="text" id="MinOutputAngle" value="0"> 
+        <input type="submit" value="Set Servo Angle as Min Output" onclick="WebSocket_SetMinOutputAngle();" />
+        <br>
+        MaxOutputAngle: <input readonly type="text" id="MaxOutputAngle" value="0">
+        <input type="submit" value="Set Servo Angle as Max Output" onclick="WebSocket_SetMaxOutputAngle();" />
+      </div>  
+      <div>
+        Output in %: <input type="number" step="1" id="OutputSP" value="0">
+        <input type="submit" value="Submit" onclick="WebSocket_SetOutput();" />
+      </div>                
       <div style="height: 300px">
          <canvas id="myChart"></canvas>
       </div>      
