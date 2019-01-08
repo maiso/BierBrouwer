@@ -72,7 +72,7 @@ class MaischerServer():
             yield from websocket.send(json.dumps(jsonDict))
 
         ## Servo Angle
-        elif 'GetServoAngle' in comamnd:
+        elif 'GetServoAngle' in command:
             jsonDict = { "Command" : command,
                          "ServoAngle" : str(self.servoAngle)}
             yield from websocket.send(json.dumps(jsonDict))
