@@ -5,9 +5,6 @@
       <meta charset="utf-8"/>
       <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.bundle.js"></script>
       <script type = "text/javascript">
-        var ws;
-        var wsConnected = false
-
         function WebSocket_GetSetPoint(){
           var handleGetSetPointAnswer = function (jsonobj) {
             document.getElementById("SetPoint").value = jsonobj.SetPoint
@@ -17,12 +14,19 @@
 
         function WebSocket_SetSetPoint(){
           var setPoint = document.getElementById("SetPoint").value;          
-          alert("SetSetPoint " + setPoint)
+          //alert("SetSetPoint " + setPoint)
 
           var handleSetSetPointAnswer = function (jsonobj) {
             alert("SetSetPoint to " + jsonobj.SetPoint)
           }
           WebSocketClient("SetSetPoint " + setPoint,handleSetSetPointAnswer)
+        }
+
+        function WebSocket_GetProcessValue(){
+          var handleGetProcessValueAnswer = function (jsonobj) {
+            document.getElementById("ProcessValue").value = jsonobj.ProcessValue
+          }
+          WebSocketClient("GetProcessValue",handleGetProcessValueAnswer)
         }
 
         function WebSocket_GetServoAngle(){
@@ -34,7 +38,7 @@
 
         function WebSocket_SetServoAngle(){
           var servoAngle = document.getElementById("ServoAngle").value;          
-          alert("ServoAngle " + servoAngle)
+          //alert("ServoAngle " + servoAngle)
 
           var handleSetServoAngleAnswer = function (jsonobj) {
             alert("SetServoAngle to " + jsonobj.ServoAngle)
@@ -45,13 +49,13 @@
         function WebSocketClient(commandToSend,messageHandler) {
           if ("WebSocket" in window) {
             // Let us open a web socket
-            ws = new WebSocket("ws://192.168.178.21:7654");
+            var ws = new WebSocket("ws://192.168.178.21:7654");
             ws.onopen = function() {
               ws.send(commandToSend);
             };                   // Web Socket is connected, send data using send()
             ws.onmessage = function(evt) {
                 var received_msg = evt.data;
-                alert(received_msg)
+                //alert(received_msg)
                 var jsonobj = JSON.parse(received_msg)                  
                 messageHandler(jsonobj)
             };
@@ -71,10 +75,12 @@
             alert("Reload")
 
             WebSocket_GetSetPoint()
+            WebSocket_GetProcessValue()
             WebSocket_GetServoAngle()
 
-            var intervalID = setInterval(WebSocket_GetSetPoint, 10000);
-            var intervalID2 = setInterval(WebSocket_GetServoAngle, 10000);
+            var intervalID = setInterval(WebSocket_GetSetPoint, 5000);
+            var intervalID = setInterval(WebSocket_GetProcessValue, 5000);
+            var intervalID2 = setInterval(WebSocket_GetServoAngle, 5000);
         };
       </script>
    </head>
@@ -84,7 +90,10 @@
         <input type="submit" value="Submit" onclick="WebSocket_SetSetPoint();" />
       </div>
       <div>
-        Servo Angle: <input type="number" step="1" min= 0 max=100 id="ServoAngle" value="0">
+        Process Value: <input readonly type="number" id="ProcessValue" value="0.0">
+      </div>      
+      <div>
+        Servo Angle: <input type="number" step="1" min=1 max=180 id="ServoAngle" value="0">
         <input type="submit" value="Submit" onclick="WebSocket_SetServoAngle();" />
         <input type="submit" value="+" onclick="WebSocket_IncreaseServoAngle();" />
         <input type="submit" value="-" onclick="WebSocket_DecreaseServoAngle();" />

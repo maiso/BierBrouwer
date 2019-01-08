@@ -7,6 +7,7 @@ import threading
 import time
 import RPi.GPIO as GPIO
 from sqlite3 import Error
+import random
 
 class ServoHandler():
     def __init__(self,servoPIN):
@@ -19,7 +20,7 @@ class ServoHandler():
 
     def setDutyCyle(self,cycle):
         self.p.ChangeDutyCycle(cycle)
-        time.sleep(0.1)
+        time.sleep(1)
         self.p.ChangeDutyCycle(0) #To stop the trembling
 
     def setAngle(self,angle):
@@ -27,6 +28,7 @@ class ServoHandler():
             return False
 
         dutyCycle = angle / (180 / 12.5)
+        print("setDutyCycle " + str(dutyCycle))
         self.setDutyCyle(dutyCycle)
         return True
 
@@ -39,12 +41,19 @@ class MaischerServer():
         self.servo = ServoHandler(23) # Pin number
 
         self.thread = threading.Thread(target=self.run, args=())
-        self.thread.daemon = True                            # Daemonize thread
+        self.runGetTempThread = True
         self.thread.start() # Start the execution
     
+    def __del__(self):
+        self.runGetTempThread = False
+
     def run(self):
-        print ('Get the temperatuur')
-        time.sleep(1)
+        while(self.runGetTempThread):
+            print ('Get the temperatuur')
+            self.processValue = self.processValue + 1
+            if self.processValue > 100:
+                self.processValue = 1
+            time.sleep(1)
 
     @asyncio.coroutine
     def wsServer(self, websocket, path):
@@ -65,12 +74,16 @@ class MaischerServer():
             jsonDict = { "Command" : command,
                          "SetPoint" : str(self.setPoint)}
             yield from websocket.send(json.dumps(jsonDict))
+
+        ####################################################
+        ## Process Value
         elif command == 'GetProcessValue':
-            self.setPoint = float(command.split(' ')[1])
+            self.processValue = float(command.split(' ')[1])
             jsonDict = { "Command" : command,
-                         "SetPoint" : str(self.setPoint)}
+                         "ProcessValue" : str(self.processValue)}
             yield from websocket.send(json.dumps(jsonDict))
 
+        ####################################################
         ## Servo Angle
         elif 'GetServoAngle' in command:
             jsonDict = { "Command" : command,
