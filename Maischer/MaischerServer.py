@@ -58,7 +58,6 @@ class MaischerServer():
         temperature = float(temperaturedata[2:])
         temp = temperature / 1000
 
-        print "sensor", sensorid, "=", temp, "graden."
         return temp   
 
     def run(self):
