@@ -35,7 +35,7 @@ class ServoHandler():
 
 class MaischerServer():
     def __init__(self):
-        self.setPoint = 0.0
+        self.setPoint = float(0.0)
         self.Temperatuur = 0.0
         self.servoAngle = 0
         self.MinOutputAngle = 1
@@ -71,12 +71,8 @@ class MaischerServer():
 
     def run(self):
         while(self.runGetTempThread):
-            averageTemp = 0.0
-            for _ in range(10):
-                averageTemp += self.ReadDS18B20("28-000008717fea")
-
-            self.Temperatuur = averageTemp / 10
-            self.pid.update(self.Temperatuur)
+            self.Temperatuur = self.ReadDS18B20("28-000008717fea")
+            self.pid.update(float(self.Temperatuur))
 
             targetPwm = self.pid.output
             self.servoAngle = max(min( int(targetPwm), 100 ),0)
@@ -100,6 +96,7 @@ class MaischerServer():
                 receivedSetPoint = 100
 
             self.setPoint = receivedSetPoint
+            self.pid.SetPoint = self.setPoint
             jsonDict = { "Command" : command,
                          "SetPoint" : str(self.setPoint)}
             yield from websocket.send(json.dumps(jsonDict))
