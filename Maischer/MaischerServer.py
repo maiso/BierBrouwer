@@ -43,6 +43,8 @@ class MaischerServer():
         self.PID_Output = 0
         self.outputPV = 0
         self.outputSP = 0 
+        self.regelaarActive = False
+
         self.servo = ServoHandler(23) # Pin number
 
         self.P = 10
@@ -82,12 +84,13 @@ class MaischerServer():
     def run(self):
         while(self.runGetTempThread):
             self.Temperatuur = self.ReadDS18B20("28-000008717fea")
-            self.pid.update(float(self.Temperatuur))
+            if self.regelaarActive == True:
+                self.pid.update(float(self.Temperatuur))
 
-            self.PID_Output = self.pid.output
-            self.outputPV  = max(min( int(self.PID_Output), 100 ),0)
-            self.setOutput(self.outputPV)
-            print ( "Target: %.1f C | Current: %.1f C | OutputPV: %d" % (self.setPoint, self.Temperatuur, self.outputPV))
+                self.PID_Output = self.pid.output
+                self.outputPV  = max(min( int(self.PID_Output), 100 ),0)
+                self.setOutput(self.outputPV)
+#                print ( "Target: %.1f C | Current: %.1f C | OutputPV: %d" % (self.setPoint, self.Temperatuur, self.outputPV))
             time.sleep(1)
 
     @asyncio.coroutine
@@ -179,6 +182,17 @@ class MaischerServer():
                          "OutputPV" : str(self.outputPV)}
             yield from websocket.send(json.dumps(jsonDict))
 
+        ####################################################
+        ## StartSTop
+        elif 'Regelaar' in command:
+            if command.split(' ')[1] == "Start":
+                self.regelaarActive = True
+            else:
+                self.regelaarActive = False
+
+            jsonDict = { "Command" : command,
+                         "OutputPV" : str(self.outputPV)}
+            yield from websocket.send(json.dumps(jsonDict))
 if __name__ == "__main__":
     MaischerServer = MaischerServer()
     start_server = websockets.serve(MaischerServer.wsServer, '0.0.0.0', 7654)

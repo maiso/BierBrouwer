@@ -192,6 +192,18 @@
           WebSocketClient(command, handleSetOutputAnswer)
         }
 
+        function WebSocket_StartRegelaar(){
+          var handleStartRegelaarAnswer = function (jsonobj) {
+          }
+          WebSocketClient("Regelaar Start",handleStartRegelaarAnswer)
+        }
+
+        function WebSocket_StopRegelaar(){
+          var handleStopRegelaarAnswer = function (jsonobj) {
+          }
+          WebSocketClient("Regelaar Stop",handleStopRegelaarAnswer)
+        }
+
         function WebSocketClient(commandToSend,messageHandler) {
           if ("WebSocket" in window) {
             // Let us open a web socket
@@ -274,8 +286,12 @@
         <input readonly type="number" id="PID_D_PV" value="0"> 
         <input type="number" step="1" id="PID_D_SP" value="1">
         <input type="submit" value="Submit" onclick="WebSocket_SetPID();" />
-      </div>                     
-      <div style="height: 300px">
+      </div>    
+      <div>
+        <input type="submit" value="Start" onclick="WebSocket_StartRegelaar();" />
+        <input type="submit" value="Stop" onclick="WebSocket_StopRegelaar();" />
+      </div> 
+      <div style="height: 500px">
          <canvas id="myChart"></canvas>
       </div>      
    </body>
