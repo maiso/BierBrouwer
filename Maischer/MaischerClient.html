@@ -19,21 +19,33 @@
                         type: 'line',
 
                         // The data for our dataset
-                        data: { datasets: [
-                        {
-                          label: 'Temperatuur',
-                          backgroundColor: window.chartColors['red'],
-                          borderColor: window.chartColors['red'],
-                          data: [],
-                          fill: false
+                        data: 
+                        { 
+                          datasets: 
+                          [
+                            {
+                              label: 'Temperatuur',
+                              backgroundColor: window.chartColors['red'],
+                              borderColor: window.chartColors['red'],
+                              data: [],
+                              fill: false
+                            },
+                            {
+                              label: 'Output',
+                              backgroundColor: window.chartColors['purple'],
+                              borderColor: window.chartColors['purple'],
+                              data: [],
+                              fill: false
+                            },
+                            {
+                              label: 'Servo Output',
+                              backgroundColor: window.chartColors['green'],
+                              borderColor: window.chartColors['green'],
+                              data: [],
+                              fill: false
+                            }                         
+                          ] 
                         },
-                        {
-                          label: 'Output',
-                          backgroundColor: window.chartColors['purple'],
-                          borderColor: window.chartColors['purple'],
-                          data: [],
-                          fill: false
-                        }]                        ] },
 
                        // Configuration options go here
                        options: {
@@ -111,6 +123,10 @@
         function WebSocket_GetServoAngle(){
           var handleGetServoAngleAnswer = function (jsonobj) {
             document.getElementById("ServoAnglePV").value = jsonobj.ServoAngle
+            ChartConfig.data.datasets[2].data.push({
+                                              x: new Date(Date.now()),
+                                              y: jsonobj.ServoAngle })
+            window.myLine.update();            
           }
           WebSocketClient("GetServoAngle",handleGetServoAngleAnswer)
         }
@@ -153,6 +169,7 @@
 
         function WebSocket_GetOutput(){
           var handleGetOutputAnswer = function (jsonobj) {
+            document.getElementById("OutputPV").value = jsonobj.OutputPV;
             ChartConfig.data.datasets[1].data.push({
                                               x: new Date(Date.now()),
                                               y: jsonobj.OutputPV })
@@ -212,9 +229,8 @@
             WebSocket_GetServoAngle()
             WebSocket_GetOutput()
 
-            var intervalID = setInterval(WebSocket_GetSetPoint, 5000);
             var intervalID = setInterval(WebSocket_GetTemperatuur, 1000);
-            var intervalID = setInterval(WebSocket_GetServoAngle, 5000);
+            var intervalID = setInterval(WebSocket_GetServoAngle, 1000);
             var intervalID = setInterval(WebSocket_GetOutput, 1000);
         };
       </script>
@@ -242,7 +258,9 @@
         <input type="submit" value="Set Servo Angle as Max Output" onclick="WebSocket_SetMaxOutputAngle();" />
       </div>  
       <div>
-        Output in %: <input type="number" step="1" id="OutputSP" value="0">
+        Output in %: 
+        Process Value: <input readonly type="number" id="OutputPV" value="0"> 
+        SetPoint     : <input type="number" step="1" id="OutputSP" value="0">
         <input type="submit" value="Submit" onclick="WebSocket_SetOutput();" />
       </div>  
       <div>
