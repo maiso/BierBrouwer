@@ -79,7 +79,7 @@ class MaischerServer():
             self.Temperatuur = averageTemp / 10
             self.pid.update(self.Temperatuur)
 
-            targetPwm = pid.output
+            targetPwm = self.pid.output
             self.servoAngle = max(min( int(targetPwm), 100 ),0)
             self.servo.setAngle(self.servoAngle)
             print ( "Target: %.1f C | Current: %.1f C | ServoAngle: %d" % (self.setPoint, self.Temperatuur, self.servoAngle))

@@ -146,7 +146,8 @@
             document.getElementById("PID_I_PV").value = jsonobj.I
             document.getElementById("PID_D_PV").value = jsonobj.D
           }
-          WebSocketClient("SetPID " + P + " " + I " " +D, handleSetOutputAnswer)
+          var command = "SetPID " + P + " " + I " " + D 
+          WebSocketClient(command, handleSetOutputAnswer)
         }
         
         function WebSocket_SetPID(){
