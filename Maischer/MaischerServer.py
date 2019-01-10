@@ -82,6 +82,7 @@ class MaischerServer():
         return temp   
 
     def run(self):
+        prevOutputPv = -1
         while(self.runGetTempThread):
             self.Temperatuur = self.ReadDS18B20("28-000008717fea")
             if self.regelaarActive == True:
@@ -89,7 +90,12 @@ class MaischerServer():
 
                 self.PID_Output = self.pid.output
                 self.outputPV  = max(min( int(self.PID_Output), 100 ),0)
-                self.setOutput(self.outputPV)
+                if self.outputPV != prevOutputPv:
+                    self.setOutput(self.outputPV)
+                else:
+                    self.setOutput(0) # if it hasn't changed stop the trembling of the servo
+
+                prevOutputPv = self.outputPV
 #                print ( "Target: %.1f C | Current: %.1f C | OutputPV: %d" % (self.setPoint, self.Temperatuur, self.outputPV))
             time.sleep(1)
 
