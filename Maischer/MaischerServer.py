@@ -40,6 +40,8 @@ class MaischerServer():
         self.servoAngle = 0
         self.MinOutputAngle = 1
         self.MaxOutputAngle = 180
+        self.outputPV = 0
+        self.outputSP = 0 
         self.servo = ServoHandler(23) # Pin number
 
         self.P = 10
@@ -74,8 +76,8 @@ class MaischerServer():
             self.Temperatuur = self.ReadDS18B20("28-000008717fea")
             self.pid.update(float(self.Temperatuur))
 
-            targetPwm = self.pid.output
-            self.servoAngle = max(min( int(targetPwm), 100 ),0)
+            self.outputPV = self.pid.output
+            self.servoAngle = max(min( int(self.outputPV), 100 ),0)
             self.servo.setAngle(self.servoAngle)
             print ( "Target: %.1f C | Current: %.1f C | ServoAngle: %d" % (self.setPoint, self.Temperatuur, self.servoAngle))
             time.sleep(1)
@@ -144,7 +146,7 @@ class MaischerServer():
             if output > 100:
                 output = 100
 
-            self.output = output
+            self.outputSP = output
 
             step = float(self.MaxOutputAngle) - float(self.MinOutputAngle) 
             step = step / 100
@@ -167,6 +169,10 @@ class MaischerServer():
                          "I" : str(self.I),
                          "D" : str(self.D),
                          }
+            yield from websocket.send(json.dumps(jsonDict))
+        elif 'GetOutput' in command:
+            jsonDict = { "Command" : command,
+                         "OutputPV" : str(self.outputPV)}
             yield from websocket.send(json.dumps(jsonDict))
 
 if __name__ == "__main__":

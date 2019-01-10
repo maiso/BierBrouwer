@@ -26,7 +26,14 @@
                           borderColor: window.chartColors['red'],
                           data: [],
                           fill: false
-                        }] },
+                        },
+                        {
+                          label: 'Output',
+                          backgroundColor: window.chartColors['purple'],
+                          borderColor: window.chartColors['purple'],
+                          data: [],
+                          fill: false
+                        }]                        ] },
 
                        // Configuration options go here
                        options: {
@@ -144,6 +151,16 @@
           WebSocketClient("SetOutput " + setPoint,handleSetOutputAnswer)
         }
 
+        function WebSocket_GetOutput(){
+          var handleGetOutputAnswer = function (jsonobj) {
+            ChartConfig.data.datasets[1].data.push({
+                                              x: new Date(Date.now()),
+                                              y: jsonobj.OutputPV })
+            window.myLine.update();
+          }
+          WebSocketClient("GetOutput",handleGetOutputAnswer)
+        }
+
         function WebSocket_SetPID(){
           var P = document.getElementById("PID_P_SP").value;
           var I = document.getElementById("PID_I_SP").value;
@@ -193,10 +210,12 @@
             WebSocket_GetSetPoint()
             WebSocket_GetTemperatuur()
             WebSocket_GetServoAngle()
+            WebSocket_GetOutput()
 
             var intervalID = setInterval(WebSocket_GetSetPoint, 5000);
             var intervalID = setInterval(WebSocket_GetTemperatuur, 1000);
             var intervalID = setInterval(WebSocket_GetServoAngle, 5000);
+            var intervalID = setInterval(WebSocket_GetOutput, 1000);
         };
       </script>
    </head>
