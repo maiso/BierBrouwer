@@ -93,7 +93,7 @@ class MaischerServer():
         ## Process Value
         elif command == 'GetTemperatuur':
             jsonDict = { "Command" : command,
-                         "ProcessValue" : str(self.Temperatuur)}
+                         "Temperatuur" : str(self.Temperatuur)}
             yield from websocket.send(json.dumps(jsonDict))
 
         ####################################################
