@@ -82,7 +82,7 @@ class MaischerServer():
             targetPwm = pid.output
             self.servoAngle = max(min( int(targetPwm), 100 ),0)
             self.servo.setAngle(self.servoAngle)
-            print "Target: %.1f C | Current: %.1f C | PWM: %s %%"%(self.setPoint, self.Temperatuur, self.servoAngle)
+            print ( "Target: %.1f C | Current: %.1f C | ServoAngle: %d" % (self.setPoint, self.Temperatuur, self.servoAngle))
 
     @asyncio.coroutine
     def wsServer(self, websocket, path):
