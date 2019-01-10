@@ -35,7 +35,7 @@ class ServoHandler():
 class MaischerServer():
     def __init__(self):
         self.setPoint = 0.0
-        self.processValue = 0.0
+        self.Temperatuur = 0.0
         self.servoAngle = 0
         self.MinOutputAngle = 1
         self.MaxOutputAngle = 180
@@ -48,13 +48,27 @@ class MaischerServer():
     def __del__(self):
         self.runGetTempThread = False
 
+    def ReadDS18B20(self, sensorid):
+        tfile = open("/sys/bus/w1/devices/"+ sensorid +"/w1_slave") #RPi 2,3 met nieuwe kernel.
+        text = tfile.read()
+        tfile.close()
+     
+        secondline = text.split("\n")[1]
+        temperaturedata = secondline.split(" ")[9]
+        temperature = float(temperaturedata[2:])
+        temp = temperature / 1000
+
+        print "sensor", sensorid, "=", temp, "graden."
+        return temp   
+
     def run(self):
         while(self.runGetTempThread):
-            print ('Get the temperatuur')
-            self.processValue = self.processValue + 1
-            if self.processValue > 100:
-                self.processValue = 1
-            time.sleep(1)
+            averageTemp = 0.0
+            for _ in range(10):
+                averageTemp += self.ReadDS18B20("28-000008717fea")
+                time.sleep(0.1)
+
+            self.Temperatuur = averageTemp / 10
 
     @asyncio.coroutine
     def wsServer(self, websocket, path):
@@ -80,7 +94,7 @@ class MaischerServer():
         ## Process Value
         elif command == 'GetTemperatuur':
             jsonDict = { "Command" : command,
-                         "ProcessValue" : str(self.processValue)}
+                         "ProcessValue" : str(self.Temperatuur)}
             yield from websocket.send(json.dumps(jsonDict))
 
         ####################################################
