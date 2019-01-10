@@ -74,7 +74,6 @@ class MaischerServer():
             averageTemp = 0.0
             for _ in range(10):
                 averageTemp += self.ReadDS18B20("28-000008717fea")
-                time.sleep(0.1)
 
             self.Temperatuur = averageTemp / 10
             self.pid.update(self.Temperatuur)
@@ -83,6 +82,7 @@ class MaischerServer():
             self.servoAngle = max(min( int(targetPwm), 100 ),0)
             self.servo.setAngle(self.servoAngle)
             print ( "Target: %.1f C | Current: %.1f C | ServoAngle: %d" % (self.setPoint, self.Temperatuur, self.servoAngle))
+            time.sleep(1)
 
     @asyncio.coroutine
     def wsServer(self, websocket, path):
