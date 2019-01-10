@@ -154,7 +154,7 @@
             document.getElementById("PID_I_PV").value = jsonobj.I;
             document.getElementById("PID_D_PV").value = jsonobj.D;
           }
-          var command = "SetPID " + str(P) + " " + str(I) " " + str(D);
+          var command ="SetPID ".concat(P," ",I," ",D);
           WebSocketClient(command, handleSetOutputAnswer)
         }
 

@@ -21,8 +21,8 @@ class ServoHandler():
 
     def setDutyCyle(self,cycle):
         self.p.ChangeDutyCycle(cycle)
-        time.sleep(1)
-        self.p.ChangeDutyCycle(0) #To stop the trembling
+        #time.sleep(1)
+        #self.p.ChangeDutyCycle(0) #To stop the trembling
 
     def setAngle(self,angle):
         if angle < 0 or angle > 180:
