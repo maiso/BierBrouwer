@@ -34,7 +34,7 @@
                          responsive: true,
                          title: {
                             display: true,
-                            text: 'Chart.js Line Chart'
+                            text: 'De Maischter'
                          },
                          tooltips: {
                             enabled: false,
@@ -91,11 +91,11 @@
 
         function WebSocket_GetTemperatuur(){
           var handleGetTemperatuurAnswer = function (jsonobj) {
-            document.getElementById("TemperatuurPV").value = jsonobj.ProcessValue
+            document.getElementById("TemperatuurPV").value = jsonobj.Temperatuur
 
             ChartConfig.data.datasets[0].data.push({
                                               x: new Date(Date.now()),
-                                              y: jsonobj.ProcessValue })
+                                              y: jsonobj.Temperatuur })
             window.myLine.update();
           }
           WebSocketClient("GetTemperatuur",handleGetTemperatuurAnswer)
@@ -137,7 +137,20 @@
         } 
 
         function WebSocket_SetOutput(){
-          var setPoint = document.getElementById("OutputSP").value;          
+          var P = document.getElementById("PID_P_SP").value;
+          var I = document.getElementById("PID_I_SP").value;
+          var D = document.getElementById("PID_D_SP").value;
+
+          var handleSetOutputAnswer = function (jsonobj) {
+            document.getElementById("PID_P_PV").value = jsonobj.P
+            document.getElementById("PID_I_PV").value = jsonobj.I
+            document.getElementById("PID_D_PV").value = jsonobj.D
+          }
+          WebSocketClient("SetPID " + P + " " + I " " +D, handleSetOutputAnswer)
+        }
+        
+        function WebSocket_SetPID(){
+          var setPoint = document.getElementById("SetPID").value;          
           var handleSetOutputAnswer = function (jsonobj) {
             document.getElementById("OutputSP").value = jsonobj.Output
           }
@@ -211,7 +224,19 @@
       <div>
         Output in %: <input type="number" step="1" id="OutputSP" value="0">
         <input type="submit" value="Submit" onclick="WebSocket_SetOutput();" />
-      </div>                
+      </div>  
+      <div>
+        PID : <br>
+        P: <input readonly type="number" id="PID_P_PV" value="0"> 
+        <input type="number" step="1" id="PID_P_SP" value="10">
+        I:
+        <input readonly type="number" id="PID_I_PV" value="0"> 
+        <input type="number" step="1" id="PID_I_SP" value="1">
+        D:
+        <input readonly type="number" id="PID_D_PV" value="0"> 
+        <input type="number" step="1" id="PID_D_SP" value="1">
+        <input type="submit" value="Submit" onclick="WebSocket_SetPID();" />
+      </div>                     
       <div style="height: 300px">
          <canvas id="myChart"></canvas>
       </div>      

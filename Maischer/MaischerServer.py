@@ -8,6 +8,7 @@ import time
 import RPi.GPIO as GPIO
 from sqlite3 import Error
 import random
+import PID
 
 class ServoHandler():
     def __init__(self,servoPIN):
@@ -41,6 +42,14 @@ class MaischerServer():
         self.MaxOutputAngle = 180
         self.servo = ServoHandler(23) # Pin number
 
+        self.P = 10
+        self.I = 1
+        self.D = 1
+
+        self.pid = PID.PID(self.P, self.I, self.D)
+        self.pid.SetPoint = self.setPoint
+        self.pid.setSampleTime(1)
+
         self.thread = threading.Thread(target=self.run, args=())
         self.runGetTempThread = True
         self.thread.start() # Start the execution
@@ -68,6 +77,12 @@ class MaischerServer():
                 time.sleep(0.1)
 
             self.Temperatuur = averageTemp / 10
+            self.pid.update(self.Temperatuur)
+
+            targetPwm = pid.output
+            self.servoAngle = max(min( int(targetPwm), 100 ),0)
+            self.servo.setAngle(self.servoAngle)
+            print "Target: %.1f C | Current: %.1f C | PWM: %s %%"%(self.setPoint, self.Temperatuur, self.servoAngle)
 
     @asyncio.coroutine
     def wsServer(self, websocket, path):
@@ -141,6 +156,20 @@ class MaischerServer():
 
             jsonDict = { "Command" : command,
                          "Output" : str(self.output)}
+            yield from websocket.send(json.dumps(jsonDict))
+
+        elif 'SetPID' in command:
+            self.P = float(command.split(' ')[1])
+            self.I = float(command.split(' ')[2])
+            self.D = float(command.split(' ')[3])
+            self.pid.setKp (self.P)
+            self.pid.setKi (self.I)
+            self.pid.setKd (self.D)
+            jsonDict = { "Command" : command,
+                         "P" : str(self.P),
+                         "I" : str(self.I),
+                         "D" : str(self.D),
+                         }
             yield from websocket.send(json.dumps(jsonDict))
 
 if __name__ == "__main__":
