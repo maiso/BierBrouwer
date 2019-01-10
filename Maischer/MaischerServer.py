@@ -93,7 +93,7 @@ class MaischerServer():
                 if self.outputPV != prevOutputPv:
                     self.setOutput(self.outputPV)
                 else:
-                    self.setOutput(0) # if it hasn't changed stop the trembling of the servo
+                    self.servo.setAngle(0) # if it hasn't changed stop the trembling of the servo
 
                 prevOutputPv = self.outputPV
 #                print ( "Target: %.1f C | Current: %.1f C | OutputPV: %d" % (self.setPoint, self.Temperatuur, self.outputPV))
