@@ -40,6 +40,7 @@ class MaischerServer():
         self.servoAngle = 0
         self.MinOutputAngle = 1
         self.MaxOutputAngle = 180
+        self.PID_Output = 0
         self.outputPV = 0
         self.outputSP = 0 
         self.servo = ServoHandler(23) # Pin number
@@ -59,6 +60,13 @@ class MaischerServer():
     def __del__(self):
         self.runGetTempThread = False
 
+
+    def setOutput(self,output):
+        step = float(self.MaxOutputAngle) - float(self.MinOutputAngle) 
+        step = step / 100
+        self.servoAngle = self.MinOutputAngle + (step * output)
+        valid = self.servo.setAngle(self.servoAngle) 
+
     def ReadDS18B20(self, sensorid):
         tfile = open("/sys/bus/w1/devices/"+ sensorid +"/w1_slave") #RPi 2,3 met nieuwe kernel.
         text = tfile.read()
@@ -76,10 +84,10 @@ class MaischerServer():
             self.Temperatuur = self.ReadDS18B20("28-000008717fea")
             self.pid.update(float(self.Temperatuur))
 
-            self.outputPV = self.pid.output
-            self.servoAngle = max(min( int(self.outputPV), 100 ),0)
-            self.servo.setAngle(self.servoAngle)
-            print ( "Target: %.1f C | Current: %.1f C | ServoAngle: %d" % (self.setPoint, self.Temperatuur, self.servoAngle))
+            self.PID_Output = self.pid.output
+            self.outputPV  = max(min( int(self.PID_Output), 100 ),0)
+            self.setOutput(self.outputPV)
+            print ( "Target: %.1f C | Current: %.1f C | OutputPV: %d" % (self.setPoint, self.Temperatuur, self.outputPV))
             time.sleep(1)
 
     @asyncio.coroutine
@@ -147,11 +155,7 @@ class MaischerServer():
                 output = 100
 
             self.outputSP = output
-
-            step = float(self.MaxOutputAngle) - float(self.MinOutputAngle) 
-            step = step / 100
-            outputServoAngle = self.MinOutputAngle + (step * output)
-            valid = self.servo.setAngle(outputServoAngle)            
+            self.setOutput(self.outputSP)
 
             jsonDict = { "Command" : command,
                          "Output" : str(self.output)}
