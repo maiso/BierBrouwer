@@ -25,6 +25,7 @@
                           [
                             {
                               label: 'Temperatuur',
+                              yAxisID: 'A',
                               backgroundColor: window.chartColors['red'],
                               borderColor: window.chartColors['red'],
                               data: [],
@@ -32,6 +33,7 @@
                             },
                             {
                               label: 'Output',
+                              yAxisID: 'B',
                               backgroundColor: window.chartColors['purple'],
                               borderColor: window.chartColors['purple'],
                               data: [],
@@ -39,6 +41,7 @@
                             },
                             {
                               label: 'Servo Output',
+                              yAxisID: 'B',
                               backgroundColor: window.chartColors['green'],
                               borderColor: window.chartColors['green'],
                               data: [],
@@ -79,13 +82,25 @@
                                                       maxTicksLimit: 20
                                                   }                                                 
                                            }],                                
-                               yAxes: [{
+                               yAxes: [
+                                        {
+                                          id: 'A',
+                                          display: true,
+                                          position: 'left',
+                                          scaleLabel: {
+                                             display: true,
+                                             labelString: 'Temperatuur'
+                                          }
+                                        },       
+                                        {
+                                        id: 'B',
                                         display: true,
+                                        position: 'right',
                                         scaleLabel: {
                                            display: true,
-                                           labelString: 'Temperatuur'
-                                        },                                
-                                     }],
+                                           labelString: 'Servo & Output'
+                                        }}                                        
+                                     ],
                                 
                           },
                        }
@@ -265,7 +280,6 @@
         <br>
         MinOutputAngle: <input readonly type="text" id="MinOutputAngle" value="0"> 
         <input type="submit" value="Set Servo Angle as Min Output" onclick="WebSocket_SetMinOutputAngle();" />
-        <br>
         MaxOutputAngle: <input readonly type="text" id="MaxOutputAngle" value="0">
         <input type="submit" value="Set Servo Angle as Max Output" onclick="WebSocket_SetMaxOutputAngle();" />
       </div>  
