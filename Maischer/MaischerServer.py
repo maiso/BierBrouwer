@@ -36,20 +36,16 @@ class ServoHandler():
 class MaischerServer():
     def __init__(self):
         self.setPoint = float(0.0)
-        self.Temperatuur = 0.0
+        self.Temperature = 0.0
         self.servoAngle = 0
-        self.MinOutputAngle = 1
-        self.MaxOutputAngle = 180
+
+        self.config = self.Configuration()
+
         self.PID_Output = 0
         self.outputPV = 0
-        self.outputSP = 0 
         self.regelaarActive = False
 
         self.servo = ServoHandler(23) # Pin number
-
-        self.P = 10
-        self.I = 1
-        self.D = 1
 
         self.pid = PID.PID(self.P, self.I, self.D)
         self.pid.SetPoint = self.setPoint
@@ -62,6 +58,31 @@ class MaischerServer():
     def __del__(self):
         self.runGetTempThread = False
 
+    class Configuration():
+        def __init__(self):
+            self.Servo = self.Servo()
+            self.PID = self.PID()
+            self.DS18B20 = "28-000008717fea"
+
+        class PID():
+            def __init__(self):
+                self.P = 10
+                self.I = 1
+                self.D = 1
+        class Servo():
+            def __init__(self):
+                self.MinOutputAngle = 1
+                self.MaxOutputAngle = 180
+        class StepperMotor():
+            def __init__(self):
+                self.MaxNrOfSteps = 0
+
+    class Measurement():
+        def __init__(self):
+            self.Date
+            self.Temperature
+            self.SetPoint
+            self.PidOutput
 
     def setOutput(self,output):
         step = float(self.MaxOutputAngle) - float(self.MinOutputAngle) 
@@ -84,9 +105,9 @@ class MaischerServer():
     def run(self):
         prevOutputPv = -1
         while(self.runGetTempThread):
-            self.Temperatuur = self.ReadDS18B20("28-000008717fea")
+            self.Temperature = self.ReadDS18B20("28-000008717fea")
             if self.regelaarActive == True:
-                self.pid.update(float(self.Temperatuur))
+                self.pid.update(float(self.Temperature))
 
                 self.PID_Output = self.pid.output
                 self.outputPV  = max(min( int(self.PID_Output), 100 ),0)
@@ -96,109 +117,83 @@ class MaischerServer():
                     self.servo.setAngle(0) # if it hasn't changed stop the trembling of the servo
 
                 prevOutputPv = self.outputPV
-#                print ( "Target: %.1f C | Current: %.1f C | OutputPV: %d" % (self.setPoint, self.Temperatuur, self.outputPV))
+#                print ( "Target: %.1f C | Current: %.1f C | OutputPV: %d" % (self.setPoint, self.Temperature, self.outputPV))
             time.sleep(1)
 
     @asyncio.coroutine
     def wsServer(self, websocket, path):
-        command = yield from websocket.recv()
-        print ('Received command:' + command)
-        if command == 'GetSetPoint':
-            jsonDict = { "Command" : command,
-                         "SetPoint" : str(self.setPoint)}
-            yield from websocket.send(json.dumps(jsonDict))
-        elif 'SetTemperatuur' in command:
-            receivedSetPoint = float(command.split(' ')[1])
-            if receivedSetPoint < 0:
-                receivedSetPoint = 0
-            if receivedSetPoint > 100:
-                receivedSetPoint = 100
+        json_string = yield from websocket.recv()
+        parsed_json = json.loads(json_string)
 
-            self.setPoint = receivedSetPoint
-            self.pid.SetPoint = self.setPoint
-            jsonDict = { "Command" : command,
-                         "SetPoint" : str(self.setPoint)}
-            yield from websocket.send(json.dumps(jsonDict))
+        print ('Received JSON:' + json_string)
 
-        ####################################################
-        ## Process Value
-        elif command == 'GetTemperatuur':
-            jsonDict = { "Command" : command,
-                         "Temperatuur" : str(self.Temperatuur)}
-            yield from websocket.send(json.dumps(jsonDict))
+        commandHandlers = {
+            'SetTemperature'   : self.handleSetTemperature,
+            'SetConfiguration' : self.handleSetConfiguration,
+            'GetMeasurement'   : self.handleGetMeasurement,
+            'StartStop'        : self.handleStartStop,
+        }
+        try:
+            result_json = commandHandlers[parsed_json['Command']]()
+            yield from websocket.send(json.dumps(result_json))
+        except Exception as e:
+            print('Exception :' + str(e))
 
-        ####################################################
-        ## Servo Angle
-        elif 'GetServoAngle' in command:
-            jsonDict = { "Command" : command,
-                         "ServoAngle" : str(self.servoAngle)}
-            yield from websocket.send(json.dumps(jsonDict))
+    def commandOkJson(self, command):
+        jsonDict = { "Command" : command,
+                     "Result"  : 'Ok'}
+         return jsonDict
+         
+    def handleSetTemperature(self, parsed_json):
+        receivedSetPoint = float(command.split(' ')[1])
+        if receivedSetPoint < 0:
+            receivedSetPoint = 0
+        if receivedSetPoint > 100:
+            receivedSetPoint = 100
 
-        elif 'SetServoAngle' in command:
-            self.servoAngle = float(command.split(' ')[1])
-            valid = self.servo.setAngle(self.servoAngle)
+        self.setPoint = receivedSetPoint
+        self.pid.SetPoint = self.setPoint
+        jsonDict = { "Command" : command,
+                     "Result"  : 'Ok',
+                     "SetPoint" : str(self.setPoint)}
+        return jsonDict
 
-            jsonDict = { "Command" : command,
-                         "Valid"   : str(valid),
-                         "ServoAngle" : str(self.servoAngle)}
-            yield from websocket.send(json.dumps(jsonDict))            
-        ####################################################
-        ## Output
-        elif 'SetMinOutputAngle' in command:
-            self.MinOutputAngle = float(command.split(' ')[1])
-            jsonDict = { "Command" : command,
-                         "MinOutputAngle" : str(self.MinOutputAngle)}
-            yield from websocket.send(json.dumps(jsonDict))
-        
-        elif 'SetMaxOutputAngle' in command:
-            self.MaxOutputAngle = float(command.split(' ')[1])
-            jsonDict = { "Command" : command,
-                         "MaxOutputAngle" : str(self.MaxOutputAngle)}
-            yield from websocket.send(json.dumps(jsonDict))
+    def handleGetMeasurement(self, parsed_json):
+        jsonDict = self.commandOkJson(parsed_json['Command'])
+        jsonDict += { "Temperature" : str(self.Temperature),
+                     "ServoAngle" : str(self.servoAngle),
+                     "OutputPV" : str(self.outputPV)
+                   }
+        return jsonDict
 
-        elif 'SetOutput' in command:
-            output = float(command.split(' ')[1])
-            if output < 0:
-                output = 0
-            if output > 100:
-                output = 100
+    def handleSetConfiguration(self, parsed_json):
+        self.MinOutputAngle = float(command.split(' ')[1])
+        self.MaxOutputAngle = float(command.split(' ')[1])
 
-            self.outputSP = output
-            self.setOutput(self.outputSP)
+        self.P = float(command.split(' ')[1])
+        self.I = float(command.split(' ')[2])
+        self.D = float(command.split(' ')[3])
+        self.pid.setKp (self.P)
+        self.pid.setKi (self.I)
+        self.pid.setKd (self.D)
 
-            jsonDict = { "Command" : command,
-                         "Output" : str(self.output)}
-            yield from websocket.send(json.dumps(jsonDict))
+    
 
-        elif 'SetPID' in command:
-            self.P = float(command.split(' ')[1])
-            self.I = float(command.split(' ')[2])
-            self.D = float(command.split(' ')[3])
-            self.pid.setKp (self.P)
-            self.pid.setKi (self.I)
-            self.pid.setKd (self.D)
-            jsonDict = { "Command" : command,
-                         "P" : str(self.P),
-                         "I" : str(self.I),
-                         "D" : str(self.D),
-                         }
-            yield from websocket.send(json.dumps(jsonDict))
-        elif 'GetOutput' in command:
-            jsonDict = { "Command" : command,
-                         "OutputPV" : str(self.outputPV)}
-            yield from websocket.send(json.dumps(jsonDict))
+        return jsonDict
 
-        ####################################################
-        ## StartSTop
-        elif 'Regelaar' in command:
-            if command.split(' ')[1] == "Start":
-                self.regelaarActive = True
-            else:
-                self.regelaarActive = False
+    def handleCalibration(self,parsed_json):
+        valid = self.servo.setAngle(self.servoAngle)
+        jsonDict = { "Command" : command,
+                     "Valid"   : str(valid),
+                     "ServoAngle" : str(self.servoAngle)}
+        return jsonDict
 
-            jsonDict = { "Command" : command,
-                         "OutputPV" : str(self.outputPV)}
-            yield from websocket.send(json.dumps(jsonDict))
+    def handleStartStop(self, parsed_json):
+        self.regelaarActive = parsed_json['Start']
+        jsonDict = { "Command" : command,
+                     "Start"   : self.regelaarActive }
+        return jsonDict
+
 if __name__ == "__main__":
     MaischerServer = MaischerServer()
     start_server = websockets.serve(MaischerServer.wsServer, '0.0.0.0', 7654)
