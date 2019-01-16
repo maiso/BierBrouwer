@@ -5,33 +5,38 @@ import json
 import sqlite3
 import threading
 import time
-import RPi.GPIO as GPIO
+
+#import RPi.GPIO as GPIO
+
 from sqlite3 import Error
 import random
 import PID
+from DatabaseInterface import DatabaseInterface
 
-class ServoHandler():
-    def __init__(self,servoPIN):
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setup(servoPIN, GPIO.OUT)
+databaseName = 'BierBrouwer.db'
 
-        self.p = GPIO.PWM(servoPIN, 50) # GPIO xx for PWM with 50Hz
-        self.p.start(2.5) # Initialization       
-        self.setDutyCyle(1) 
+#class ServoHandler():
+    # def __init__(self,servoPIN):
+    #     GPIO.setmode(GPIO.BCM)
+    #     GPIO.setup(servoPIN, GPIO.OUT)
 
-    def setDutyCyle(self,cycle):
-        self.p.ChangeDutyCycle(cycle)
-        #time.sleep(1)
-        #self.p.ChangeDutyCycle(0) #To stop the trembling
+    #     self.p = GPIO.PWM(servoPIN, 50) # GPIO xx for PWM with 50Hz
+    #     self.p.start(2.5) # Initialization       
+    #     self.setDutyCyle(1) 
 
-    def setAngle(self,angle):
-        if angle < 0 or angle > 180:
-            return False
+    # def setDutyCyle(self,cycle):
+    #     self.p.ChangeDutyCycle(cycle)
+    #     #time.sleep(1)
+    #     #self.p.ChangeDutyCycle(0) #To stop the trembling
 
-        dutyCycle = angle / (180 / 11)
-        print("setDutyCycle " + str(dutyCycle))
-        self.setDutyCyle(dutyCycle)
-        return True
+    # def setAngle(self,angle):
+    #     if angle < 0 or angle > 180:
+    #         return False
+
+    #     dutyCycle = angle / (180 / 11)
+    #     print("setDutyCycle " + str(dutyCycle))
+    #     self.setDutyCyle(dutyCycle)
+    #     return True
 
 class MaischerServer():
     def __init__(self):
@@ -41,19 +46,21 @@ class MaischerServer():
 
         self.config = self.Configuration()
 
+        self.db = DatabaseInterface(databaseName)
+
         self.PID_Output = 0
         self.outputPV = 0
         self.regelaarActive = False
 
-        self.servo = ServoHandler(23) # Pin number
+        #self.servo = ServoHandler(23) # Pin number
 
-        self.pid = PID.PID(self.P, self.I, self.D)
-        self.pid.SetPoint = self.setPoint
-        self.pid.setSampleTime(1)
+        #self.pid = PID.PID(self.P, self.I, self.D)
+        #self.pid.SetPoint = self.setPoint
+        #self.pid.setSampleTime(1)
 
-        self.thread = threading.Thread(target=self.run, args=())
-        self.runGetTempThread = True
-        self.thread.start() # Start the execution
+        #self.thread = threading.Thread(target=self.run, args=())
+        #self.runGetTempThread = True
+        #self.thread.start() # Start the execution
     
     def __del__(self):
         self.runGetTempThread = False
@@ -123,18 +130,21 @@ class MaischerServer():
     @asyncio.coroutine
     def wsServer(self, websocket, path):
         json_string = yield from websocket.recv()
-        parsed_json = json.loads(json_string)
-
         print ('Received JSON:' + json_string)
 
+        parsed_json = json.loads(json_string)
+
         commandHandlers = {
+            'GetBrewages'      : self.handleGetBrewages,
+            'OpenBrewage'      : self.handleOpenBrewage,
             'SetTemperature'   : self.handleSetTemperature,
             'SetConfiguration' : self.handleSetConfiguration,
             'GetMeasurement'   : self.handleGetMeasurement,
             'StartStop'        : self.handleStartStop,
         }
         try:
-            result_json = commandHandlers[parsed_json['Command']]()
+            result_json = commandHandlers[parsed_json['Command']](parsed_json)
+            print("Sending to client: " + str(result_json))
             yield from websocket.send(json.dumps(result_json))
         except Exception as e:
             print('Exception :' + str(e))
@@ -142,8 +152,24 @@ class MaischerServer():
     def commandOkJson(self, command):
         jsonDict = { "Command" : command,
                      "Result"  : 'Ok'}
-         return jsonDict
-         
+        return jsonDict
+    
+    def handleGetBrewages(self, parsed_json):
+        brewages = self.db.getAllBrewages()
+        jsonDict = self.commandOkJson(parsed_json['Command'])
+        brewagesList = []
+        for row in brewages:
+            brewagesList.append(row["BrewName"])
+        jsonDict["Brewages"] = brewagesList
+        return jsonDict
+
+    def handleOpenBrewage(self, parsed_json):
+        brewages = self.db.getBrewage(parsed_json['Brewage'])
+        jsonDict = self.commandOkJson(parsed_json['Command'])
+        jsonDict = {**jsonDict, **brewages[0]}
+
+        return jsonDict
+
     def handleSetTemperature(self, parsed_json):
         receivedSetPoint = float(command.split(' ')[1])
         if receivedSetPoint < 0:

@@ -1,10 +1,10 @@
 import glob, os
 import json
 import threading
-import time
+import datetime
 import sqlite3
 
-#ID, NAME, BrewDate, CalibrationId,MashingSchematicId
+#ID, Name, BrewDate, CalibrationId,MashingId
 class DatabaseInterface():
     def __init__(self, databaseName):
         self.conn = sqlite3.connect(databaseName)
@@ -17,59 +17,95 @@ class DatabaseInterface():
     def getCalibration(self,BrewageId):
         t = (BrewageId,)
         self.c.execute('''
-            SELECT P, I, D, MinServoAngel, MaxServoAngel, NrOfSteps, MaxStepSpeed, DegreesPerStep
+            SELECT P, I, D, MinServoAngle, MaxServoAngle, NrOfSteps, MaxStepSpeed, DegreesPerStep
             FROM Brewages
             LEFT JOIN Calibration ON Brewage.CalibrationId = Calibration.ID;
             WHERE Brewages.ID=?
             ''', t)
         data = self.c.fetchone()
         jsonRet = json.dumps(data)
-        print (jsonRet)
+        #print (jsonRet)
         return jsonRet
 
     def createTables(self):
         self.createCalibrationTable()
-        self.createMashingSchematicTable()
+        self.createMashingTable()
         self.createSetpointsTable()
-        self.createBoilingSchematicTable()
+        self.createBoilingTable()
         self.createHopMomentsTable()
         self.createBrewagesTable()
         self.createMeasurementsTable()
 
+        self.createDefaultConfiguration()
+        self.createDefaultBrewage()
+
+    def createDefaultConfiguration(self):
+        self.insertConfiguration("DefaultCalibration",10,1,1,0,0,0,0,0)    
+
+    def createDefaultBrewage(self):
+        self.insertBrewage("TestBrew",str(datetime.datetime.now()),0,0,0,0,1,None)
+
+#########################################################################
+### Calibration
+#########################################################################
     def createCalibrationTable(self):
         self.c.execute('''
             CREATE TABLE IF NOT EXISTS Calibration(
                ID    INTEGER PRIMARY KEY AUTOINCREMENT,
-               NAME  TEXT  NOT NULL,               
+               CalibrationName  TEXT  NOT NULL,               
                P  REAL  ,
                I  REAL  ,
                D  REAL  ,
-               MinServoAngel  REAL,
-               MaxServoAngel  REAL,
+               MinServoAngle  REAL,
+               MaxServoAngle  REAL,
                NrOfSteps      REAL,
                MaxStepSpeed   REAL,
                DegreesPerStep REAL
             );
             ''')
 
-#########################################################################
-### MashingSchematic
-#########################################################################
-    def createMashingSchematicTable(self):
+    def insertConfiguration(self,CalibrationName,P,I,D,MinServoAngle,MaxServoAngle,NrOfSteps,MaxStepSpeed, DegreesPerStep):
         self.c.execute('''
-            CREATE TABLE IF NOT EXISTS MashingSchematic(
+            INSERT INTO Calibration(
+               CalibrationName,               
+               P  ,
+               I  ,
+               D  ,
+               MinServoAngle  ,
+               MaxServoAngle  ,
+               NrOfSteps      ,
+               MaxStepSpeed   ,
+               DegreesPerStep 
+            ) 
+            VALUES(?,?,?,?,?,?,?,?,?);
+            ''', (CalibrationName,               
+                  P  ,
+                  I  ,
+                  D  ,
+                  MinServoAngle  ,
+                  MaxServoAngle  ,
+                  NrOfSteps      ,
+                  MaxStepSpeed   ,
+                  DegreesPerStep ))
+        self.conn.commit()  
+#########################################################################
+### Mashing
+#########################################################################
+    def createMashingTable(self):
+        self.c.execute('''
+            CREATE TABLE IF NOT EXISTS Mashing(
                ID    INTEGER PRIMARY KEY AUTOINCREMENT,
-               Name  TEXT  NOT NULL          
+               MashName  TEXT  NOT NULL          
             );
             ''')
 
-    def newMashingSchematic(self, name):
+    def newMashing(self, MashName):
         self.c.execute('''
-            INSERT INTO MashingSchematic(
-               Name
+            INSERT INTO Mashing(
+               MashName
             ) 
             VALUES(?);
-            ''', (name))
+            ''', (MashName))
         self.conn.commit()
 
 ### SetPoints
@@ -79,35 +115,35 @@ class DatabaseInterface():
                ID         INTEGER PRIMARY KEY AUTOINCREMENT,
                StartTime  TEXT  NOT NULL,               
                SetPoint   REAL ,
-               MashingSchematicId INT NOT NULL,
-               FOREIGN KEY(MashingSchematicId) REFERENCES MashingSchematic(ID)
+               MashingId INT NOT NULL,
+               FOREIGN KEY(MashingId) REFERENCES Mashing(ID)
             );
             ''')
 
-    def newSetpoint(self, StartTime, SetPoint, MashingSchematicId):
+    def newSetpoint(self, StartTime, SetPoint, MashingId):
         self.c.execute('''
             INSERT INTO Setpoints(
                StartTime,
                SetPoint,
-               MashingSchematicId
+               MashingId
             ) 
             VALUES(?,?,?);
-            ''', (StartTime, SetPoint, MashingSchematicId))
+            ''', (StartTime, SetPoint, MashingId))
         self.conn.commit()
 
 #########################################################################
-### BoilingSchematic
+### Boiling
 #########################################################################
-    def createBoilingSchematicTable(self):
+    def createBoilingTable(self):
         self.c.execute('''
-            CREATE TABLE IF NOT EXISTS BoilingSchematic(
+            CREATE TABLE IF NOT EXISTS Boiling(
                ID                 INTEGER PRIMARY KEY AUTOINCREMENT,
                BoilingTime        INTEGER,
                BoilingTemperature INTEGER
             );
             ''')
 
-    def newBoilingSchematic(self, BoilingTime,BoilingTemperature ):
+    def newBoiling(self, BoilingTime,BoilingTemperature ):
         self.c.execute('''
             INSERT INTO Brewages(
                BoilingTime,
@@ -123,23 +159,23 @@ class DatabaseInterface():
             CREATE TABLE IF NOT EXISTS HopMoments(
                ID             INTEGER PRIMARY KEY AUTOINCREMENT,
                StartTime      TEXT  NOT NULL,               
-               Hopname        TEXT  NOT NULL,
+               HopName        TEXT  NOT NULL,
                AmountInGrams  REAL,
-               BoilingSchematicId INT NOT NULL,
-               FOREIGN KEY(BoilingSchematicId) REFERENCES BoilingSchematic(ID)
+               BoilingId INT NOT NULL,
+               FOREIGN KEY(BoilingId) REFERENCES Boiling(ID)
             );
             ''')
 
-    def newHopMoments(self, StartTime, Hopname, AmountInGrams, BoilingSchematicId):
+    def newHopMoments(self, StartTime, HopName, AmountInGrams, BoilingId):
         self.c.execute('''
             INSERT INTO HopMoments(
                StartTime,
-               Hopname,
+               HopName,
                AmountInGrams,
-               BoilingSchematicId
+               BoilingId
             )
             VALUES(?,?,?);
-            ''', (StartTime, Hopname, AmountInGrams, BoilingSchematicId))
+            ''', (StartTime, HopName, AmountInGrams, BoilingId))
         self.conn.commit()
 
 #########################################################################
@@ -149,44 +185,70 @@ class DatabaseInterface():
         self.c.execute('''
             CREATE TABLE IF NOT EXISTS Brewages(
                ID                 INTEGER PRIMARY KEY AUTOINCREMENT,
-               NAME               TEXT  NOT NULL UNIQUE,
+               BrewName           TEXT  NOT NULL UNIQUE,
                BrewDate           TEXT  NOT NULL UNIQUE,
                MashingStartTime   TEXT,
                MashingStopTime    TEXT,
                BoilingStartTime   TEXT,
                BoilingStopTime    TEXT,
                CalibrationId      INT,
-               MashingSchematicId INT,
+               MashingId INT,
                FOREIGN KEY(CalibrationId) REFERENCES Calibration(ID),
-               FOREIGN KEY(MashingSchematicId) REFERENCES MashingSchematic(ID)
+               FOREIGN KEY(MashingId) REFERENCES Mashing(ID)
             );
             ''')
-
-    def getAllBrewages(self):
-        self.c.execute('''SELECT * FROM Brewages''')
-        self.rows = self.c.fetchall()
-
-        print (self.rows)
-        #print (self.rows[0]['NAME'])
-        print([dict(row) for row in self.rows])
-        jsonRet = json.dumps([dict(row) for row in self.rows])
-        print (jsonRet)   
-        return jsonRet
-
-    def newBrewage(self, name, date, CalibrationId,MashingSchematic):
+    def insertBrewage(self, BrewName, BrewDate, MashingStartTime, MashingStopTime,BoilingStartTime, BoilingStopTime, CalibrationId, MashingId):
         self.c.execute('''
             INSERT INTO Brewages(
-               NAME,
-               BrewDate,
-               CalibrationId,
-               MashingSchematicId
-            ) 
-            VALUES(?,?,?,?);
-            ''', (name,date,CalibrationId,MashingSchematic))
+               BrewName           ,
+               BrewDate           ,
+               MashingStartTime   ,
+               MashingStopTime    ,
+               BoilingStartTime   ,
+               BoilingStopTime    ,
+               CalibrationId      ,
+               MashingId
+            )
+            VALUES(?,?,?,?,?,?,?,?);
+            ''', (BrewName,
+                BrewDate,
+                MashingStartTime,
+                MashingStopTime,
+                BoilingStartTime,
+                BoilingStopTime,
+                CalibrationId,
+                MashingId))
         self.conn.commit()
 
-        self.c.execute('''SELECT ID FROM Brewages WHERE NAME = ?''',(name,))
+        self.c.execute('''SELECT ID FROM Brewages WHERE BrewName = ?''',(BrewName,))
         return self.c.fetchone()['ID']
+
+
+    def getAllBrewages(self):
+        self.c.execute('''SELECT BrewName FROM Brewages''')
+        self.rows = self.c.fetchall()
+
+        #print (self.rows)
+        #print (self.rows[0]['Name'])
+        #print([dict(row) for row in self.rows])
+        #jsonRet = json.dumps([dict(row) for row in self.rows])
+        #print (jsonRet)   
+        return [dict(row) for row in self.rows]
+
+
+    def getBrewage(self, brewageName):
+        self.c.execute('''SELECT * 
+          FROM Brewages 
+          LEFT JOIN Calibration ON Brewages.CalibrationId = Calibration.ID
+          WHERE BrewName = ?''',(brewageName,))
+        self.rows = self.c.fetchall()
+
+        #print (self.rows)
+        #print (self.rows[0]['Name'])
+        #print([dict(row) for row in self.rows])
+        #jsonRet = json.dumps([dict(row) for row in self.rows])
+        #print (jsonRet)   
+        return [dict(row) for row in self.rows]
 
 
 #########################################################################
@@ -205,21 +267,21 @@ class DatabaseInterface():
             );
             ''')
 
-if __name__ == "__main__":
-    print ("starting...")
-    dateTime = time.strftime("%Y%m%d%H%M")
-    print ('Today is: %s', dateTime)
-    databaseName = 'BierBrouwer.db'
-    dbInterface = None
-    #try:
-    dbInterface = DatabaseInterface(databaseName)
-    jsonRet = dbInterface.getAllBrewages()
-    print (jsonRet) 
-    newId = dbInterface.newBrewage(dateTime,dateTime,None,None)        
-    print ("newId " + str(newId))
-    #except Exception as e:
-    #    print (str(e))
+# if __Name__ == "__main__":
+#     print ("starting...")
+#     dateTime = time.strftime("%Y%m%d%H%M")
+#     print ('Today is: %s', dateTime)
+#     databaseName = 'BierBrouwer.db'
+#     dbInterface = None
+#     #try:
+#     dbInterface = DatabaseInterface(databaseName)
+#     jsonRet = dbInterface.getAllBrewages()
+#     print (jsonRet) 
+#     newId = dbInterface.insertBrewage(dateTime,dateTime,None,None)        
+#     print ("newId " + str(newId))
+#     #except Exception as e:
+#     #    print (str(e))
     
-    time.sleep(5)
+#     time.sleep(5)
 
 

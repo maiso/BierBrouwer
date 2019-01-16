@@ -105,7 +105,46 @@
                           },
                        }
                    };
-        var colorNames = Object.keys(window.chartColors);        
+        var colorNames = Object.keys(window.chartColors);     
+
+        function CreateJsonCommand(command){
+          var obj = new Object();
+          obj.Command = command;
+          return obj
+        }
+
+        function WebSocket_GetBrewages(){
+          var handleGetBrewagesAnswer = function (jsonobj) {
+            var selectList = document.getElementById("BrewageList");
+             //Create and append the options
+             for (var i = 0; i < jsonobj.Brewages.length; i++) {
+                 var option = document.createElement("option");
+                 option.setAttribute("value", jsonobj.Brewages[i]);
+                 option.text = jsonobj.Brewages[i];
+                 selectList.appendChild(option);
+             }
+          }
+
+          cmd = CreateJsonCommand("GetBrewages")
+          WebSocketClient(cmd,handleGetBrewagesAnswer)
+        }
+
+        function WebSocket_OpenBrewage(){
+          var handleOpenBrewageAnswer = function (jsonobj) {
+            document.getElementById("PID_P_PV").value = jsonobj.P;
+            document.getElementById("PID_I_PV").value = jsonobj.I;
+            document.getElementById("PID_D_PV").value = jsonobj.D;
+            document.getElementById("MinOutputAngle").value = jsonobj.MinOutputAngle
+            document.getElementById("MaxOutputAngle").value = jsonobj.MaxOutputAngle
+          }
+          var selectList = document.getElementById("BrewageList");
+          var selectedDatabase = selectList.options[selectList.selectedIndex].text;
+
+          cmd = CreateJsonCommand("OpenBrewage")
+          cmd.Brewage = selectedDatabase
+          WebSocketClient(cmd,handleOpenBrewageAnswer)
+        }
+
         function WebSocket_GetSetPoint(){
           var handleGetSetPointAnswer = function (jsonobj) {
             document.getElementById("TemperatuurPV").value = jsonobj.SetPoint
@@ -219,10 +258,11 @@
           WebSocketClient("Regelaar Stop",handleStopRegelaarAnswer)
         }
 
-        function WebSocketClient(commandToSend,messageHandler) {
+        function WebSocketClient(jsonCommandToSend,messageHandler) {
           if ("WebSocket" in window) {
             // Let us open a web socket
-            var ws = new WebSocket("ws://192.168.178.21:7654");
+            commandToSend = JSON.stringify(jsonCommandToSend);          
+            var ws = new WebSocket("ws://localhost:7654"); //192.168.178.21
             ws.onopen = function() {
               ws.send(commandToSend);
             };                   // Web Socket is connected, send data using send()
@@ -251,18 +291,44 @@
             ctx.height = 500;
             window.myLine = new Chart(ctx, ChartConfig);   
 
-            WebSocket_GetSetPoint()
-            WebSocket_GetTemperatuur()
-            WebSocket_GetServoAngle()
-            WebSocket_GetOutput()
+            WebSocket_GetBrewages()
 
-            var intervalID = setInterval(WebSocket_GetTemperatuur, 1000);
-            var intervalID = setInterval(WebSocket_GetServoAngle, 1000);
-            var intervalID = setInterval(WebSocket_GetOutput, 1000);
+            // WebSocket_GetSetPoint()
+            // WebSocket_GetTemperatuur()
+            // WebSocket_GetServoAngle()
+            // WebSocket_GetOutput()
+
+            // var intervalID = setInterval(WebSocket_GetTemperatuur, 1000);
+            // var intervalID = setInterval(WebSocket_GetServoAngle, 1000);
+            // var intervalID = setInterval(WebSocket_GetOutput, 1000);
         };
       </script>
    </head>
    <body>
+      <div>
+        The select Brewage:
+        <select id="BrewageList">
+        <input type="button" value="Open Brewage" onclick="WebSocket_OpenBrewage();" />
+      </div>      
+      <div>      
+        Calibration: 
+        <div>
+          <p>
+          Servo Angle Min and Max Output: 
+          <br>
+          MinOutputAngle: <input readonly type="text" id="MinOutputAngle" value="0"> 
+          <input type="submit" value="Set Servo Angle as Min Output" onclick="WebSocket_SetMinOutputAngle();" />
+          <br>
+          MaxOutputAngle: <input readonly type="text" id="MaxOutputAngle" value="0">
+          <input type="submit" value="Set Servo Angle as Max Output" onclick="WebSocket_SetMaxOutputAngle();" /></p>
+        </div>  
+        <div>
+          Output in %: 
+          Process Value: <input readonly type="number" id="OutputPV" value="0"> 
+          SetPoint     : <input type="number" step="1" id="OutputSP" value="0">
+          <input type="submit" value="Submit" onclick="WebSocket_SetOutput();" />
+        </div> 
+      </div>
       <div>
         Temperatuur: 
         Process Value: <input readonly type="number" id="TemperatuurPV" value="0.0"> 
@@ -275,20 +341,7 @@
         SetPoint     : <input type="number" step="1" id="ServoAngleSP" value="1">
         <input type="submit" value="Submit" onclick="WebSocket_SetServoAngle();" />
       </div>      
-      <div>
-        Servo Angle Min and Max Output: 
-        <br>
-        MinOutputAngle: <input readonly type="text" id="MinOutputAngle" value="0"> 
-        <input type="submit" value="Set Servo Angle as Min Output" onclick="WebSocket_SetMinOutputAngle();" />
-        MaxOutputAngle: <input readonly type="text" id="MaxOutputAngle" value="0">
-        <input type="submit" value="Set Servo Angle as Max Output" onclick="WebSocket_SetMaxOutputAngle();" />
-      </div>  
-      <div>
-        Output in %: 
-        Process Value: <input readonly type="number" id="OutputPV" value="0"> 
-        SetPoint     : <input type="number" step="1" id="OutputSP" value="0">
-        <input type="submit" value="Submit" onclick="WebSocket_SetOutput();" />
-      </div>  
+ 
       <div>
         PID : <br>
         P: <input readonly type="number" id="PID_P_PV" value="0"> 
