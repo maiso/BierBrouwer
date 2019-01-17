@@ -14,18 +14,18 @@ class DatabaseInterface():
 
         self.createTables()
 
-    def getCalibration(self,BrewageId):
-        t = (BrewageId,)
-        self.c.execute('''
-            SELECT P, I, D, MinServoAngle, MaxServoAngle, NrOfSteps, MaxStepSpeed, DegreesPerStep
-            FROM Brewages
-            LEFT JOIN Calibration ON Brewage.CalibrationId = Calibration.ID;
-            WHERE Brewages.ID=?
-            ''', t)
-        data = self.c.fetchone()
-        jsonRet = json.dumps(data)
-        #print (jsonRet)
-        return jsonRet
+    # def getCalibration(self,BrewageId):
+    #     t = (BrewageId,)
+    #     self.c.execute('''
+    #         SELECT P, I, D, MinServoAngle, MaxServoAngle, NrOfSteps, MaxStepSpeed, DegreesPerStep
+    #         FROM Brewages
+    #         LEFT JOIN Calibration ON Brewage.CalibrationId = Calibration.ID;
+    #         WHERE Brewages.ID=?
+    #         ''', t)
+    #     data = self.c.fetchone()
+    #     jsonRet = json.dumps(data)
+    #     #print (jsonRet)
+    #     return jsonRet
 
     def createTables(self):
         self.createCalibrationTable()
@@ -37,13 +37,19 @@ class DatabaseInterface():
         self.createMeasurementsTable()
 
         self.createDefaultConfiguration()
+        self.createDefaultMashing()
         self.createDefaultBrewage()
 
     def createDefaultConfiguration(self):
         self.insertConfiguration("DefaultCalibration",10,1,1,0,0,0,0,0)    
 
     def createDefaultBrewage(self):
-        self.insertBrewage("TestBrew",str(datetime.datetime.now()),0,0,0,0,1,None)
+        self.insertBrewage("TestBrew",str(datetime.datetime.now()),0,0,0,0,1,1)
+
+    def createDefaultMashing(self):
+      self.insertMashing("Amerikaanse IPA")
+      self.insterSetpoint("Amerikaanse IPA", 0, 60, 65)
+
 
 #########################################################################
 ### Calibration
@@ -51,7 +57,7 @@ class DatabaseInterface():
     def createCalibrationTable(self):
         self.c.execute('''
             CREATE TABLE IF NOT EXISTS Calibration(
-               ID    INTEGER PRIMARY KEY AUTOINCREMENT,
+               CalibrationId    INTEGER PRIMARY KEY AUTOINCREMENT,
                CalibrationName  TEXT  NOT NULL,               
                P  REAL  ,
                I  REAL  ,
@@ -88,48 +94,73 @@ class DatabaseInterface():
                   MaxStepSpeed   ,
                   DegreesPerStep ))
         self.conn.commit()  
+
+    def getCalibration(self, CalibrationId):
+        self.c.execute('''SELECT * FROM Calibration WHERE CalibrationId = ?''',(CalibrationId,))
+        return self.c.fetchone()
+
 #########################################################################
 ### Mashing
 #########################################################################
     def createMashingTable(self):
         self.c.execute('''
             CREATE TABLE IF NOT EXISTS Mashing(
-               ID    INTEGER PRIMARY KEY AUTOINCREMENT,
+               MashingId    INTEGER PRIMARY KEY AUTOINCREMENT,
                MashName  TEXT  NOT NULL          
             );
             ''')
 
-    def newMashing(self, MashName):
+    def insertMashing(self, MashName):
         self.c.execute('''
             INSERT INTO Mashing(
                MashName
-            ) 
+            )
             VALUES(?);
-            ''', (MashName))
+            ''', (MashName,))
         self.conn.commit()
+        return self.getMashingId(MashName)
+    
+    def getMashing(self, MashingId):
+        self.c.execute('''SELECT *
+          FROM Mashing 
+          WHERE Mashing.MashingId = ?
+          ''',(MashingId,))
+        return self.c.fetchone()
+
+    def getMashingId(self, MashName):
+        self.c.execute('''SELECT MashingId FROM Mashing WHERE MashName = ?''',(MashName,))
+        return self.c.fetchone()['MashingId']
 
 ### SetPoints
     def createSetpointsTable(self):
         self.c.execute('''
             CREATE TABLE IF NOT EXISTS Setpoints(
-               ID         INTEGER PRIMARY KEY AUTOINCREMENT,
-               StartTime  TEXT  NOT NULL,               
+               MashingId  INT NOT NULL,
+               SequenceNumber INT,
+               Duration   TEXT  NOT NULL,
                SetPoint   REAL ,
-               MashingId INT NOT NULL,
-               FOREIGN KEY(MashingId) REFERENCES Mashing(ID)
+               FOREIGN KEY(MashingId) REFERENCES Mashing(MashingId)
             );
             ''')
 
-    def newSetpoint(self, StartTime, SetPoint, MashingId):
+    def insterSetpoint(self, MashingName, SequenceNumber, Duration, SetPoint):
         self.c.execute('''
-            INSERT INTO Setpoints(
-               StartTime,
-               SetPoint,
-               MashingId
-            ) 
-            VALUES(?,?,?);
-            ''', (StartTime, SetPoint, MashingId))
+          INSERT INTO Setpoints(
+             SequenceNumber,
+             Duration,
+             SetPoint,
+             MashingId
+          ) 
+          VALUES(?,?,?,?);
+          ''', (SequenceNumber, Duration, SetPoint, self.getMashingId(MashingName)))
         self.conn.commit()
+
+    def getSetPoints(self, MashingId):
+        self.c.execute('''SELECT *
+          FROM SetPoints 
+          WHERE SetPoints.MashingId = ?
+          ''',(MashingId,))
+        return self.c.fetchall()
 
 #########################################################################
 ### Boiling
@@ -137,7 +168,7 @@ class DatabaseInterface():
     def createBoilingTable(self):
         self.c.execute('''
             CREATE TABLE IF NOT EXISTS Boiling(
-               ID                 INTEGER PRIMARY KEY AUTOINCREMENT,
+               BoilingId          INTEGER PRIMARY KEY AUTOINCREMENT,
                BoilingTime        INTEGER,
                BoilingTemperature INTEGER
             );
@@ -157,12 +188,12 @@ class DatabaseInterface():
     def createHopMomentsTable(self):
         self.c.execute('''
             CREATE TABLE IF NOT EXISTS HopMoments(
-               ID             INTEGER PRIMARY KEY AUTOINCREMENT,
+               HopMomentId    INTEGER PRIMARY KEY AUTOINCREMENT,
                StartTime      TEXT  NOT NULL,               
                HopName        TEXT  NOT NULL,
                AmountInGrams  REAL,
                BoilingId INT NOT NULL,
-               FOREIGN KEY(BoilingId) REFERENCES Boiling(ID)
+               FOREIGN KEY(BoilingId) REFERENCES Boiling(BoilingId)
             );
             ''')
 
@@ -184,7 +215,7 @@ class DatabaseInterface():
     def createBrewagesTable(self):
         self.c.execute('''
             CREATE TABLE IF NOT EXISTS Brewages(
-               ID                 INTEGER PRIMARY KEY AUTOINCREMENT,
+               BrewageId          INTEGER PRIMARY KEY AUTOINCREMENT,
                BrewName           TEXT  NOT NULL UNIQUE,
                BrewDate           TEXT  NOT NULL UNIQUE,
                MashingStartTime   TEXT,
@@ -193,8 +224,8 @@ class DatabaseInterface():
                BoilingStopTime    TEXT,
                CalibrationId      INT,
                MashingId INT,
-               FOREIGN KEY(CalibrationId) REFERENCES Calibration(ID),
-               FOREIGN KEY(MashingId) REFERENCES Mashing(ID)
+               FOREIGN KEY(CalibrationId) REFERENCES Calibration(CalibrationId),
+               FOREIGN KEY(MashingId) REFERENCES Mashing(MashingId)
             );
             ''')
     def insertBrewage(self, BrewName, BrewDate, MashingStartTime, MashingStopTime,BoilingStartTime, BoilingStopTime, CalibrationId, MashingId):
@@ -220,9 +251,8 @@ class DatabaseInterface():
                 MashingId))
         self.conn.commit()
 
-        self.c.execute('''SELECT ID FROM Brewages WHERE BrewName = ?''',(BrewName,))
-        return self.c.fetchone()['ID']
-
+        self.c.execute('''SELECT BrewageId FROM Brewages WHERE BrewName = ?''',(BrewName,))
+        return self.c.fetchone()['BrewageId']
 
     def getAllBrewages(self):
         self.c.execute('''SELECT BrewName FROM Brewages''')
@@ -235,20 +265,44 @@ class DatabaseInterface():
         #print (jsonRet)   
         return [dict(row) for row in self.rows]
 
-
     def getBrewage(self, brewageName):
         self.c.execute('''SELECT * 
           FROM Brewages 
-          LEFT JOIN Calibration ON Brewages.CalibrationId = Calibration.ID
           WHERE BrewName = ?''',(brewageName,))
-        self.rows = self.c.fetchall()
+        brewage = self.c.fetchone()
+        print('self.getCalibration')
+        calibration = self.getCalibration(brewage['CalibrationId'])
+        print('self.getMashing')
+        mashing = self.getMashing(brewage['MashingId'])
+        print('self.getSetPoints')
+        setpoints = self.getSetPoints(mashing['MashingId'])
+        setpoints = [dict(row) for row in setpoints]
+        print (brewage)
+        brewage = dict(brewage)
+        print (brewage)
+        del brewage['CalibrationId']
+        print (brewage)
+        del brewage['MashingId']
+        print (brewage)
+        brewage['Calibration'] = dict(calibration)
+        print (brewage)
+        brewage['Mashing'] = dict(mashing)
+        print (brewage)
 
+        print (brewage['Mashing'])        
+        print (setpoints)
+        brewage['Mashing']['SetPoints'] = setpoints
+        print (brewage)
+
+        #LEFT JOIN Calibration ON Brewages.CalibrationId = Calibration.ID
+        #LEFT JOIN Mashing ON Brewages.MashingId = Mashing.ID
+        #LEFT JOIN Setpoints ON Brewages.MashingId = Setpoints.MashingId
         #print (self.rows)
         #print (self.rows[0]['Name'])
         #print([dict(row) for row in self.rows])
         #jsonRet = json.dumps([dict(row) for row in self.rows])
         #print (jsonRet)   
-        return [dict(row) for row in self.rows]
+        return brewage
 
 
 #########################################################################
@@ -257,13 +311,13 @@ class DatabaseInterface():
     def createMeasurementsTable(self):
         self.c.execute('''
             CREATE TABLE IF NOT EXISTS Measurements(
-               ID               INTEGER PRIMARY KEY AUTOINCREMENT,
+               MeasurementId    INTEGER PRIMARY KEY AUTOINCREMENT,
                BrewageId        INT   NOT NULL,
                MeasurementTime  TEXT  NOT NULL,               
                SetPoint         REAL,
                Temperature      REAL,
                PIDOutput        REAL,
-               FOREIGN KEY(BrewageId) REFERENCES Brewages(ID)
+               FOREIGN KEY(BrewageId) REFERENCES Brewages(BrewageId)
             );
             ''')
 
@@ -283,5 +337,6 @@ class DatabaseInterface():
 #     #    print (str(e))
     
 #     time.sleep(5)
+
 
 

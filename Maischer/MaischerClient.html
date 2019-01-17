@@ -134,8 +134,12 @@
             document.getElementById("PID_P_PV").value = jsonobj.P;
             document.getElementById("PID_I_PV").value = jsonobj.I;
             document.getElementById("PID_D_PV").value = jsonobj.D;
-            document.getElementById("MinOutputAngle").value = jsonobj.MinOutputAngle
-            document.getElementById("MaxOutputAngle").value = jsonobj.MaxOutputAngle
+            document.getElementById("MinOutputAngle").value = jsonobj.MinServoAngle;
+            document.getElementById("MaxOutputAngle").value = jsonobj.MaxServoAngle;
+
+
+            document.getElementById("BrewageList").disabled = true;
+            document.getElementById("pbOpenBrewage").disabled = true;
           }
           var selectList = document.getElementById("BrewageList");
           var selectedDatabase = selectList.options[selectList.selectedIndex].text;
@@ -308,7 +312,7 @@
       <div>
         The select Brewage:
         <select id="BrewageList">
-        <input type="button" value="Open Brewage" onclick="WebSocket_OpenBrewage();" />
+        <input id="pbOpenBrewage" type="button" value="Open Brewage" onclick="WebSocket_OpenBrewage();" />
       </div>      
       <div>      
         Calibration: 
@@ -340,8 +344,7 @@
         Process Value: <input readonly type="number" id="ServoAnglePV" value="0"> 
         SetPoint     : <input type="number" step="1" id="ServoAngleSP" value="1">
         <input type="submit" value="Submit" onclick="WebSocket_SetServoAngle();" />
-      </div>      
- 
+      </div>
       <div>
         PID : <br>
         P: <input readonly type="number" id="PID_P_PV" value="0"> 
