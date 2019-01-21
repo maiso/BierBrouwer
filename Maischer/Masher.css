@@ -1,13 +1,27 @@
 
 hmtl, body { 
-	min-height: 100vh;
-    margin: 0;
-    padding: 0;
+	min-height: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    overflow-y: hidden;
+    margin: 10;
+    padding: 10;
 }
 
 body {
 	font-family: Bradley Hand, cursive;
 	font-size: 12px;
+}
+
+#wrapper {
+  display: flex;  /* use the flex model */
+  min-height: 100%;
+  flex-direction: column;  /* learn more: http://philipwalton.github.io/solved-by-flexbox/demos/sticky-footer/ */
+}
+
+#myChart {
+  flex: 1;
+  border: 1px solid black;
 }
 
 /* A page filling opaque layer that overlays the page to make the inside div 
@@ -35,10 +49,10 @@ containing a popup stand out */
   	padding: 15px;
 
   	display: inline-flex;
-	/*align-items: center;		
+	align-items: center;		
   	flex-wrap: wrap;
   	justify-content: space-around;
-*/
+
 	background-color :#FFF;
 	border-radius: 25px;
 	box-shadow: 0px 20px 20px #000;

@@ -17,7 +17,7 @@ window.chartColors = {
                           datasets: 
                           [
                             {
-                              label: 'Temperatuur',
+                              label: 'Temperature',
                               yAxisID: 'A',
                               backgroundColor: window.chartColors['red'],
                               borderColor: window.chartColors['red'],
@@ -27,19 +27,11 @@ window.chartColors = {
                             {
                               label: 'Output',
                               yAxisID: 'B',
-                              backgroundColor: window.chartColors['purple'],
-                              borderColor: window.chartColors['purple'],
-                              data: [],
-                              fill: false
-                            },
-                            {
-                              label: 'Servo Output',
-                              yAxisID: 'B',
                               backgroundColor: window.chartColors['green'],
                               borderColor: window.chartColors['green'],
                               data: [],
                               fill: false
-                            }                         
+                            }                        
                           ] 
                         },
 
@@ -49,7 +41,7 @@ window.chartColors = {
                          responsive: true,
                          title: {
                             display: true,
-                            text: 'De Maischter'
+                            text: 'The Masher'
                          },
                          tooltips: {
                             enabled: false,
@@ -80,24 +72,38 @@ window.chartColors = {
                                           id: 'A',
                                           display: true,
                                           position: 'left',
+                                            
+                                          ticks: {
+                                              beginAtZero: true,
+                                              suggestedMin: 0,
+                                              suggestedMax: 100, 
+                                          },                                                                                  
                                           scaleLabel: {
                                              display: true,
-                                             labelString: 'Temperatuur'
+                                             labelString: 'Temperature'
                                           }
+
                                         },       
                                         {
                                         id: 'B',
                                         display: true,
                                         position: 'right',
+                                     
+                                        ticks: {
+                                            beginAtZero: true,
+                                            min: 0,
+                                            max: 100,
+                                        },                                        
                                         scaleLabel: {
                                            display: true,
-                                           labelString: 'Servo & Output'
+                                           labelString: 'Output'
                                         }}                                        
                                      ],
                                 
                           },
                        }
                    };
+
         var colorNames = Object.keys(window.chartColors);     
         var openedBrewage = null
         var openedConfiguration = null
@@ -136,6 +142,7 @@ window.chartColors = {
             document.getElementById("BrewageList").disabled = true;
             document.getElementById("pbOpenBrewage").disabled = true;
             document.getElementById("pbShowConfiguration").disabled = false;
+            document.getElementById("pbStartPID").disabled = false;
           }
           var selectList = document.getElementById("BrewageList");
           var selectedDatabase = selectList.options[selectList.selectedIndex].text;
@@ -145,44 +152,43 @@ window.chartColors = {
           WebSocketClient(cmd,handleOpenBrewageAnswer)
         }
 
-        function GetSetPoint(){
-          var handleGetSetPointAnswer = function (jsonobj) {
-            document.getElementById("TemperatuurPV").value = jsonobj.SetPoint
+        var intervalID = null
+        function StartGetMeasurements(cb){
+          if (cb.checked){
+             intervalID = setInterval(GetMeasurement, 1000);
+          }else{
+            clearInterval(intervalID)
           }
-          WebSocketClient("GetSetPoint",handleGetSetPointAnswer)
         }
 
-        function SetTemperatuur(){
-          var setPoint = document.getElementById("TemperatuurSP").value;          
-          //alert("SetTemperatuur " + setPoint)
-
-          var handleSetTemperatuurAnswer = function (jsonobj) {
-            document.getElementById("TemperatuurSP").value = jsonobj.SetPoint
-          }
-          WebSocketClient("SetTemperatuur " + setPoint,handleSetTemperatuurAnswer)
-        }
-
-        function GetTemperatuur(){
-          var handleGetTemperatuurAnswer = function (jsonobj) {
-            document.getElementById("TemperatuurPV").value = jsonobj.Temperatuur
-
+        function GetMeasurement(){
+          var handleGetMeasurementAnswer = function (jsonobj) {
+            document.getElementById("TemperatureSP").value = jsonobj.TemperatureSetPoint
+            document.getElementById("TemperaturePV").value = jsonobj.TemperatureProcessValue  
+            
             ChartConfig.data.datasets[0].data.push({
+                        x: new Date(Date.now()),
+                        y: jsonobj.TemperatureProcessValue })
+
+            document.getElementById("OutputPV").value = jsonobj.OutputPV;
+            ChartConfig.data.datasets[1].data.push({
                                               x: new Date(Date.now()),
-                                              y: jsonobj.Temperatuur })
+                                              y: jsonobj.OutputPV })
             window.myLine.update();
           }
-          WebSocketClient("GetTemperatuur",handleGetTemperatuurAnswer)
+
+          cmd = CreateJsonCommand("GetMeasurement")
+          WebSocketClient(cmd,handleGetMeasurementAnswer)
         }
 
-        function GetServoAngle(){
-          var handleGetServoAngleAnswer = function (jsonobj) {
-            document.getElementById("ServoAnglePV").value = jsonobj.ServoAngle
-            ChartConfig.data.datasets[2].data.push({
-                                              x: new Date(Date.now()),
-                                              y: jsonobj.ServoAngle })
-            window.myLine.update();            
+        /*function SetTemperature(){
+          var setPoint = document.getElementById("TemperatureSP").value;          
+          //alert("SetTemperature " + setPoint)
+
+          var handleSetTemperatureAnswer = function (jsonobj) {
+            document.getElementById("TemperatureSP").value = jsonobj.SetPoint
           }
-          WebSocketClient("GetServoAngle",handleGetServoAngleAnswer)
+          WebSocketClient("SetTemperature " + setPoint,handleSetTemperatureAnswer)
         }
 
         function SetOutput(){
@@ -191,47 +197,34 @@ window.chartColors = {
             document.getElementById("OutputSP").value = jsonobj.Output;
           }
           WebSocketClient("SetOutput " + setPoint,handleSetOutputAnswer)
-        }
+        }*/
 
-        function GetOutput(){
-          var handleGetOutputAnswer = function (jsonobj) {
-            document.getElementById("OutputPV").value = jsonobj.OutputPV;
-            ChartConfig.data.datasets[1].data.push({
-                                              x: new Date(Date.now()),
-                                              y: jsonobj.OutputPV })
-            window.myLine.update();
-          }
-          WebSocketClient("GetOutput",handleGetOutputAnswer)
-        }
-
-        function SetConfiguration(){
-          var handleSetOutputAnswer = function (jsonobj) {
-            openedConfiguration = jsonobj
-            ReloadConfiguration()
-          }
-          console.log("SetConfiguration")
-          cmd = CreateJsonCommand("SetConfiguration")
-          cmd.Configuration = new Object();
-          cmd.Configuration.ConfigurationId   = document.getElementById("Configuration_Id").value;
-          cmd.Configuration.ConfigurationName = document.getElementById("Configuration_Name").value;
-          cmd.Configuration.P = document.getElementById("Configuration_P").value;
-          cmd.Configuration.I = document.getElementById("Configuration_I").value;
-          cmd.Configuration.D = document.getElementById("Configuration_D").value;
-          cmd.Configuration.NrOfSteps = document.getElementById("Configuration_NrOfSteps").value;
-
-          WebSocketClient(cmd, handleSetOutputAnswer)
-        }
 
         function StartRegelaar(){
           var handleStartRegelaarAnswer = function (jsonobj) {
+            document.getElementById("pbStopPID").disabled = false;
+            document.getElementById("pbStartPID").disabled = true;
+            if(intervalID == null){
+              intervalID = setInterval(GetMeasurement, 1000);
+            }
           }
-          WebSocketClient("Regelaar Start",handleStartRegelaarAnswer)
+          cmd = CreateJsonCommand("StartStop")
+          cmd.Start = true
+          WebSocketClient(cmd,handleStartRegelaarAnswer)
         }
 
         function StopRegelaar(){
           var handleStopRegelaarAnswer = function (jsonobj) {
+            document.getElementById("pbStopPID").disabled = true;
+            document.getElementById("pbStartPID").disabled = false;
+
+            if(intervalID != null){
+              clearInterval(intervalID)
+            }
           }
-          WebSocketClient("Regelaar Stop",handleStopRegelaarAnswer)
+          cmd = CreateJsonCommand("StartStop")
+          cmd.Start = false
+          WebSocketClient(cmd,handleStopRegelaarAnswer)
         }
 
         function WebSocketClient(jsonCommandToSend,messageHandler) {
@@ -261,6 +254,27 @@ window.chartColors = {
           }                       
         }
 
+/**************************************************************************************/
+/*      Configuration       */
+
+        function SetConfiguration(){
+          var handleSetOutputAnswer = function (jsonobj) {
+            openedConfiguration = jsonobj
+            ReloadConfiguration()
+          }
+          console.log("SetConfiguration")
+          cmd = CreateJsonCommand("SetConfiguration")
+          cmd.Configuration = new Object();
+          cmd.Configuration.ConfigurationId   = document.getElementById("Configuration_Id").value;
+          cmd.Configuration.ConfigurationName = document.getElementById("Configuration_Name").value;
+          cmd.Configuration.P = document.getElementById("Configuration_P").value;
+          cmd.Configuration.I = document.getElementById("Configuration_I").value;
+          cmd.Configuration.D = document.getElementById("Configuration_D").value;
+          cmd.Configuration.NrOfSteps = document.getElementById("Configuration_NrOfSteps").value;
+
+          WebSocketClient(cmd, handleSetOutputAnswer)
+        }
+
         function SaveConfiguration(){
           SetConfiguration();
           CloseConfiguration();
@@ -269,10 +283,6 @@ window.chartColors = {
         function CloseConfiguration(){
           document.getElementById("configurationPopup").style.display = "none";
         }
-        /**************************************************************
-
-        */
-
 
         function ReloadConfiguration(){
           if ( openedConfiguration != null)
@@ -300,12 +310,7 @@ window.chartColors = {
 
             GetBrewages()
 
-            // GetSetPoint()
-            // GetTemperatuur()
-            // GetServoAngle()
-            // GetOutput()
-
-            // var intervalID = setInterval(GetTemperatuur, 1000);
+            // var intervalID = setInterval(GetTemperature, 1000);
             // var intervalID = setInterval(GetServoAngle, 1000);
             // var intervalID = setInterval(GetOutput, 1000);
         };

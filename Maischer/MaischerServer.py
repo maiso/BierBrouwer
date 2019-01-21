@@ -41,7 +41,7 @@ databaseName = 'BierBrouwer.db'
 
 class MaischerServer():
     def __init__(self):
-        self.setPoint = float(0.0)
+        self.TemperatureSetPoint = float(0.0)
         self.Temperature = 0.0
         self.servoAngle = 0
 
@@ -56,7 +56,7 @@ class MaischerServer():
         #self.servo = ServoHandler(23) # Pin number
 
         #self.pid = PID.PID(self.P, self.I, self.D)
-        #self.pid.SetPoint = self.setPoint
+        #self.pid.SetPoint = self.TemperatureSetPoint
         #self.pid.setSampleTime(1)
 
         #self.thread = threading.Thread(target=self.run, args=())
@@ -111,6 +111,10 @@ class MaischerServer():
         while(self.runGetTempThread):
             self.Temperature = self.ReadDS18B20("28-000008717fea")
             if self.regelaarActive == True:
+                self.pid.setKp (self.P)
+                self.pid.setKi (self.I)
+                self.pid.setKd (self.D)                
+
                 self.pid.update(float(self.Temperature))
 
                 self.PID_Output = self.pid.output
@@ -121,7 +125,7 @@ class MaischerServer():
                     self.servo.setAngle(0) # if it hasn't changed stop the trembling of the servo
 
                 prevOutputPv = self.outputPV
-#                print ( "Target: %.1f C | Current: %.1f C | OutputPV: %d" % (self.setPoint, self.Temperature, self.outputPV))
+#                print ( "Target: %.1f C | Current: %.1f C | OutputPV: %d" % (self.TemperatureSetPoint, self.Temperature, self.outputPV))
             time.sleep(1)
 
     @asyncio.coroutine
@@ -134,7 +138,6 @@ class MaischerServer():
         commandHandlers = {
             'GetBrewages'      : self.handleGetBrewages,
             'OpenBrewage'      : self.handleOpenBrewage,
-            'SetTemperature'   : self.handleSetTemperature,
             'SetConfiguration' : self.handleSetConfiguration,
             'GetMeasurement'   : self.handleGetMeasurement,
             'StartStop'        : self.handleStartStop,
@@ -162,39 +165,40 @@ class MaischerServer():
 
     def handleOpenBrewage(self, parsed_json):
         brewages = self.db.getBrewage(parsed_json['Brewage'])
+
         jsonDict = self.commandOkJson(parsed_json['Command'])
         jsonDict = {**jsonDict, **brewages}
-
         return jsonDict
 
-    def handleSetTemperature(self, parsed_json):
-        receivedSetPoint = float(command.split(' ')[1])
-        if receivedSetPoint < 0:
-            receivedSetPoint = 0
-        if receivedSetPoint > 100:
-            receivedSetPoint = 100
+    # def handleSetTemperature(self, parsed_json):
+    #     receivedSetPoint = float(command.split(' ')[1])
+    #     if receivedSetPoint < 0:
+    #         receivedSetPoint = 0
+    #     if receivedSetPoint > 100:
+    #         receivedSetPoint = 100
 
-        self.setPoint = receivedSetPoint
-        self.pid.SetPoint = self.setPoint
-        jsonDict = { "Command" : command,
-                     "Result"  : 'Ok',
-                     "SetPoint" : str(self.setPoint)}
-        return jsonDict
+    #     self.TemperatureSetPoint = receivedSetPoint
+    #     self.pid.SetPoint = self.TemperatureSetPoint
+    #     jsonDict = { "Command" : command,
+    #                  "Result"  : 'Ok',
+    #                  "SetPoint" : str(self.TemperatureSetPoint)}
+    #     return jsonDict
 
     def handleGetMeasurement(self, parsed_json):
         jsonDict = self.commandOkJson(parsed_json['Command'])
-        jsonDict += { "Temperature" : str(self.Temperature),
-                     "ServoAngle" : str(self.servoAngle),
-                     "OutputPV" : str(self.outputPV)
+        measurement = { "TemperatureSetPoint"     : str(self.TemperatureSetPoint),
+                        "TemperatureProcessValue" : str(self.Temperature),
+                        "OutputPV"                : str(self.outputPV)
                    }
+        jsonDict = {**jsonDict, **measurement}
         return jsonDict
 
     def handleSetConfiguration(self, parsed_json):
-        ConfigId = parsed_json['Configuration']['ConfigurationId']
-        ConfigName = parsed_json['Configuration']['ConfigurationName']
-        ConfigP = parsed_json['Configuration']['P']
-        ConfigI = parsed_json['Configuration']['I']
-        ConfigD = parsed_json['Configuration']['D']
+        ConfigId        = parsed_json['Configuration']['ConfigurationId']
+        ConfigName      = parsed_json['Configuration']['ConfigurationName']
+        ConfigP         = parsed_json['Configuration']['P']
+        ConfigI         = parsed_json['Configuration']['I']
+        ConfigD         = parsed_json['Configuration']['D']
         ConfigNrOfSteps = parsed_json['Configuration']['NrOfSteps']
 
         self.db.updateConfiguration(ConfigId,ConfigName,ConfigP,ConfigI,ConfigD,ConfigNrOfSteps)
@@ -202,26 +206,15 @@ class MaischerServer():
         self.I = float(ConfigI)
         self.D = float(ConfigD)
 
-        #self.pid.setKp (self.P)
-        #self.pid.setKi (self.I)
-        #self.pid.setKd (self.D)
-
         jsonDict = self.commandOkJson(parsed_json['Command'])
         newConfig = self.db.getConfiguration(ConfigId)
         jsonDict = {**jsonDict, **newConfig}
         return jsonDict
 
-    def handleCalibration(self,parsed_json):
-        valid = self.servo.setAngle(self.servoAngle)
-        jsonDict = { "Command" : command,
-                     "Valid"   : str(valid),
-                     "ServoAngle" : str(self.servoAngle)}
-        return jsonDict
-
     def handleStartStop(self, parsed_json):
         self.regelaarActive = parsed_json['Start']
-        jsonDict = { "Command" : command,
-                     "Start"   : self.regelaarActive }
+        jsonDict = self.commandOkJson(parsed_json['Command'])
+        jsonDict["Start"] = self.regelaarActive
         return jsonDict
 
 if __name__ == "__main__":
