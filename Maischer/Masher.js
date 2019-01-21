@@ -25,6 +25,14 @@ window.chartColors = {
                               fill: false
                             },
                             {
+                              label: 'Set Point',
+                              yAxisID: 'A',
+                              backgroundColor: window.chartColors['orange'],
+                              borderColor: window.chartColors['orange'],
+                              data: [],
+                              fill: false
+                            },                            
+                            {
                               label: 'Output',
                               yAxisID: 'B',
                               backgroundColor: window.chartColors['green'],
@@ -170,8 +178,11 @@ window.chartColors = {
                         x: new Date(Date.now()),
                         y: jsonobj.TemperatureProcessValue })
 
-            document.getElementById("OutputPV").value = jsonobj.OutputPV;
             ChartConfig.data.datasets[1].data.push({
+                        x: new Date(Date.now()),
+                        y: jsonobj.TemperatureSetPoint })
+
+            ChartConfig.data.datasets[2].data.push({
                                               x: new Date(Date.now()),
                                               y: jsonobj.OutputPV })
             window.myLine.update();
