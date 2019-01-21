@@ -192,16 +192,18 @@ window.chartColors = {
           WebSocketClient(cmd,handleGetMeasurementAnswer)
         }
 
-        /*function SetTemperature(){
+        function SetTemperature(){
           var setPoint = document.getElementById("TemperatureSP").value;          
-          //alert("SetTemperature " + setPoint)
 
           var handleSetTemperatureAnswer = function (jsonobj) {
             document.getElementById("TemperatureSP").value = jsonobj.SetPoint
           }
-          WebSocketClient("SetTemperature " + setPoint,handleSetTemperatureAnswer)
-        }
 
+          cmd = CreateJsonCommand("SetTemperatureSetpoint")
+          cmd.SetPoint = setPoint
+          WebSocketClient(cmd,handleSetTemperatureAnswer)
+        }
+        /*
         function SetOutput(){
           var setPoint = document.getElementById("OutputSP").value;          
           var handleSetOutputAnswer = function (jsonobj) {

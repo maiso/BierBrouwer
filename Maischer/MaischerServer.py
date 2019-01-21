@@ -12,7 +12,7 @@ from sqlite3 import Error
 import random
 import PID
 from DatabaseInterface import DatabaseInterface
-from stepperMotor import stepperMotor
+#from StepperMotor import StepperMotor
 
 databaseName = 'BierBrouwer.db'
 
@@ -100,6 +100,7 @@ class MaischerServer():
             'SetConfiguration' : self.handleSetConfiguration,
             'GetMeasurement'   : self.handleGetMeasurement,
             'StartStop'        : self.handleStartStop,
+            'SetTemperature'   : self.handleSetTemperature,
         }
         #try:
         result_json = commandHandlers[parsed_json['Command']](parsed_json)
@@ -131,19 +132,19 @@ class MaischerServer():
         jsonDict = {**jsonDict, **brewages}
         return jsonDict
 
-    # def handleSetTemperature(self, parsed_json):
-    #     receivedSetPoint = float(command.split(' ')[1])
-    #     if receivedSetPoint < 0:
-    #         receivedSetPoint = 0
-    #     if receivedSetPoint > 100:
-    #         receivedSetPoint = 100
+    def handleSetTemperature(self, parsed_json):
+        receivedSetPoint = parsed_json['SetPoint']
+        if receivedSetPoint < 0:
+            receivedSetPoint = 0
+        if receivedSetPoint > 100:
+            receivedSetPoint = 100
 
-    #     self.TemperatureSetPoint = receivedSetPoint
-    #     self.pid.SetPoint = self.TemperatureSetPoint
-    #     jsonDict = { "Command" : command,
-    #                  "Result"  : 'Ok',
-    #                  "SetPoint" : str(self.TemperatureSetPoint)}
-    #     return jsonDict
+        self.TemperatureSetPoint = receivedSetPoint
+        self.pid.SetPoint = self.TemperatureSetPoint
+        jsonDict = { "Command" : command,
+                     "Result"  : 'Ok',
+                     "SetPoint" : str(self.TemperatureSetPoint)}
+        return jsonDict
 
     def handleGetMeasurement(self, parsed_json):
         jsonDict = self.commandOkJson(parsed_json['Command'])
