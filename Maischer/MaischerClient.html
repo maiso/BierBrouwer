@@ -3,364 +3,52 @@
 <html>
    <head>
       <meta charset="utf-8"/>
+      <link rel="stylesheet" type="text/css" href="Masher.css">
       <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.bundle.js"></script>
-      <script type = "text/javascript">
-        window.chartColors = {
-          red: 'rgb(255, 99, 132)',
-          orange: 'rgb(255, 159, 64)',
-          yellow: 'rgb(255, 205, 86)',
-          green: 'rgb(75, 192, 192)',
-          blue: 'rgb(54, 162, 235)',
-          purple: 'rgb(153, 102, 255)',
-          grey: 'rgb(201, 203, 207)'
-        };         
-        var ChartConfig = {
-                        // The type of chart we want to create
-                        type: 'line',
-
-                        // The data for our dataset
-                        data: 
-                        { 
-                          datasets: 
-                          [
-                            {
-                              label: 'Temperatuur',
-                              yAxisID: 'A',
-                              backgroundColor: window.chartColors['red'],
-                              borderColor: window.chartColors['red'],
-                              data: [],
-                              fill: false
-                            },
-                            {
-                              label: 'Output',
-                              yAxisID: 'B',
-                              backgroundColor: window.chartColors['purple'],
-                              borderColor: window.chartColors['purple'],
-                              data: [],
-                              fill: false
-                            },
-                            {
-                              label: 'Servo Output',
-                              yAxisID: 'B',
-                              backgroundColor: window.chartColors['green'],
-                              borderColor: window.chartColors['green'],
-                              data: [],
-                              fill: false
-                            }                         
-                          ] 
-                        },
-
-                       // Configuration options go here
-                       options: {
-                         maintainAspectRatio: false,
-                         responsive: true,
-                         title: {
-                            display: true,
-                            text: 'De Maischter'
-                         },
-                         tooltips: {
-                            enabled: false,
-                            mode: 'index',
-                            intersect: false,
-                         },    
-                         elements: {
-                                    point:{
-                                        radius: 0
-                                    }
-                                },                       
-                         scales: {
-                               xAxes: [{
-                                              type: 'time',
-                                              time: {
-                                                   unit: 'minute',
-                                                    displayFormats: {
-                                                       minute: 'HH:mm:ss'
-                                                   }                                          
-                                              },
-                                              ticks: {
-                                                      autoSkip: true,
-                                                      maxTicksLimit: 20
-                                                  }                                                 
-                                           }],                                
-                               yAxes: [
-                                        {
-                                          id: 'A',
-                                          display: true,
-                                          position: 'left',
-                                          scaleLabel: {
-                                             display: true,
-                                             labelString: 'Temperatuur'
-                                          }
-                                        },       
-                                        {
-                                        id: 'B',
-                                        display: true,
-                                        position: 'right',
-                                        scaleLabel: {
-                                           display: true,
-                                           labelString: 'Servo & Output'
-                                        }}                                        
-                                     ],
-                                
-                          },
-                       }
-                   };
-        var colorNames = Object.keys(window.chartColors);     
-
-        function CreateJsonCommand(command){
-          var obj = new Object();
-          obj.Command = command;
-          return obj
-        }
-
-        function WebSocket_GetBrewages(){
-          var handleGetBrewagesAnswer = function (jsonobj) {
-            var selectList = document.getElementById("BrewageList");
-             //Create and append the options
-             for (var i = 0; i < jsonobj.Brewages.length; i++) {
-                 var option = document.createElement("option");
-                 option.setAttribute("value", jsonobj.Brewages[i]);
-                 option.text = jsonobj.Brewages[i];
-                 selectList.appendChild(option);
-             }
-          }
-
-          cmd = CreateJsonCommand("GetBrewages")
-          WebSocketClient(cmd,handleGetBrewagesAnswer)
-        }
-
-        function WebSocket_OpenBrewage(){
-          var handleOpenBrewageAnswer = function (jsonobj) {
-            document.getElementById("PID_P_PV").value = jsonobj.P;
-            document.getElementById("PID_I_PV").value = jsonobj.I;
-            document.getElementById("PID_D_PV").value = jsonobj.D;
-            document.getElementById("MinOutputAngle").value = jsonobj.MinServoAngle;
-            document.getElementById("MaxOutputAngle").value = jsonobj.MaxServoAngle;
-
-
-            document.getElementById("BrewageList").disabled = true;
-            document.getElementById("pbOpenBrewage").disabled = true;
-          }
-          var selectList = document.getElementById("BrewageList");
-          var selectedDatabase = selectList.options[selectList.selectedIndex].text;
-
-          cmd = CreateJsonCommand("OpenBrewage")
-          cmd.Brewage = selectedDatabase
-          WebSocketClient(cmd,handleOpenBrewageAnswer)
-        }
-
-        function WebSocket_GetSetPoint(){
-          var handleGetSetPointAnswer = function (jsonobj) {
-            document.getElementById("TemperatuurPV").value = jsonobj.SetPoint
-          }
-          WebSocketClient("GetSetPoint",handleGetSetPointAnswer)
-        }
-
-        function WebSocket_SetTemperatuur(){
-          var setPoint = document.getElementById("TemperatuurSP").value;          
-          //alert("SetTemperatuur " + setPoint)
-
-          var handleSetTemperatuurAnswer = function (jsonobj) {
-            document.getElementById("TemperatuurSP").value = jsonobj.SetPoint
-          }
-          WebSocketClient("SetTemperatuur " + setPoint,handleSetTemperatuurAnswer)
-        }
-
-        function WebSocket_GetTemperatuur(){
-          var handleGetTemperatuurAnswer = function (jsonobj) {
-            document.getElementById("TemperatuurPV").value = jsonobj.Temperatuur
-
-            ChartConfig.data.datasets[0].data.push({
-                                              x: new Date(Date.now()),
-                                              y: jsonobj.Temperatuur })
-            window.myLine.update();
-          }
-          WebSocketClient("GetTemperatuur",handleGetTemperatuurAnswer)
-        }
-
-        function WebSocket_GetServoAngle(){
-          var handleGetServoAngleAnswer = function (jsonobj) {
-            document.getElementById("ServoAnglePV").value = jsonobj.ServoAngle
-            ChartConfig.data.datasets[2].data.push({
-                                              x: new Date(Date.now()),
-                                              y: jsonobj.ServoAngle })
-            window.myLine.update();            
-          }
-          WebSocketClient("GetServoAngle",handleGetServoAngleAnswer)
-        }
-
-        function WebSocket_SetServoAngle(){
-          var servoAngle = document.getElementById("ServoAngleSP").value;          
-          //alert("ServoAngle " + servoAngle)
-
-          var handleSetServoAngleAnswer = function (jsonobj) {
-            document.getElementById("ServoAngleSP").value = jsonobj.ServoAngle
-          }
-          WebSocketClient("SetServoAngle " + servoAngle,handleSetServoAngleAnswer)
-        }
-
-        function WebSocket_SetMinOutputAngle(){
-          var servoAngle = document.getElementById("ServoAngleSP").value;          
-
-          var handleSetMinOutputAngleAnswer = function (jsonobj) {
-            document.getElementById("MinOutputAngle").value = jsonobj.MinOutputAngle
-          }
-          WebSocketClient("SetMinOutputAngle " + servoAngle,handleSetMinOutputAngleAnswer)
-        }   
-
-        function WebSocket_SetMaxOutputAngle(){
-          var servoAngle = document.getElementById("ServoAngleSP").value;          
-
-          var handleSetMaxOutputAngleAnswer = function (jsonobj) {
-            document.getElementById("MaxOutputAngle").value = jsonobj.MaxOutputAngle
-          }
-          WebSocketClient("SetMaxOutputAngle " + servoAngle,handleSetMaxOutputAngleAnswer)
-        } 
-
-        function WebSocket_SetOutput(){
-          var setPoint = document.getElementById("OutputSP").value;          
-          var handleSetOutputAnswer = function (jsonobj) {
-            document.getElementById("OutputSP").value = jsonobj.Output;
-          }
-          WebSocketClient("SetOutput " + setPoint,handleSetOutputAnswer)
-        }
-
-        function WebSocket_GetOutput(){
-          var handleGetOutputAnswer = function (jsonobj) {
-            document.getElementById("OutputPV").value = jsonobj.OutputPV;
-            ChartConfig.data.datasets[1].data.push({
-                                              x: new Date(Date.now()),
-                                              y: jsonobj.OutputPV })
-            window.myLine.update();
-          }
-          WebSocketClient("GetOutput",handleGetOutputAnswer)
-        }
-
-        function WebSocket_SetPID(){
-          var P = document.getElementById("PID_P_SP").value;
-          var I = document.getElementById("PID_I_SP").value;
-          var D = document.getElementById("PID_D_SP").value;
-
-          var handleSetOutputAnswer = function (jsonobj) {
-            document.getElementById("PID_P_PV").value = jsonobj.P;
-            document.getElementById("PID_I_PV").value = jsonobj.I;
-            document.getElementById("PID_D_PV").value = jsonobj.D;
-          }
-          var command ="SetPID ".concat(P," ",I," ",D);
-          WebSocketClient(command, handleSetOutputAnswer)
-        }
-
-        function WebSocket_StartRegelaar(){
-          var handleStartRegelaarAnswer = function (jsonobj) {
-          }
-          WebSocketClient("Regelaar Start",handleStartRegelaarAnswer)
-        }
-
-        function WebSocket_StopRegelaar(){
-          var handleStopRegelaarAnswer = function (jsonobj) {
-          }
-          WebSocketClient("Regelaar Stop",handleStopRegelaarAnswer)
-        }
-
-        function WebSocketClient(jsonCommandToSend,messageHandler) {
-          if ("WebSocket" in window) {
-            // Let us open a web socket
-            commandToSend = JSON.stringify(jsonCommandToSend);          
-            var ws = new WebSocket("ws://localhost:7654"); //192.168.178.21
-            ws.onopen = function() {
-              ws.send(commandToSend);
-            };                   // Web Socket is connected, send data using send()
-            ws.onmessage = function(evt) {
-                var received_msg = evt.data;
-                //alert(received_msg)
-                var jsonobj = JSON.parse(received_msg)                  
-                messageHandler(jsonobj)
-            };
-
-            ws.onclose = function() { 
-            };
-
-            ws.onerror = function(evt) {
-              alert('ws normal error: ' + evt.type);
-            };  
-          } else {
-              // The browser doesn't support WebSocket
-              alert("WebSocket NOT supported by your Browser!");
-          }                       
-        }
-        window.onload = function() {
-            //alert("Reload")
-
-            var ctx = document.getElementById("myChart").getContext('2d');
-            ctx.height = 500;
-            window.myLine = new Chart(ctx, ChartConfig);   
-
-            WebSocket_GetBrewages()
-
-            // WebSocket_GetSetPoint()
-            // WebSocket_GetTemperatuur()
-            // WebSocket_GetServoAngle()
-            // WebSocket_GetOutput()
-
-            // var intervalID = setInterval(WebSocket_GetTemperatuur, 1000);
-            // var intervalID = setInterval(WebSocket_GetServoAngle, 1000);
-            // var intervalID = setInterval(WebSocket_GetOutput, 1000);
-        };
-      </script>
+      <script type = "text/javascript" src="Masher.js"> </script>
    </head>
    <body>
+      <div id="configurationPopup">
+        <div class="flex-container">
+          <table id="configurationTable">
+            <tr style="display:none;">  <td>Id</td> <td><input readonly type="text" id="Configuration_Id"></td></tr>    
+            <tr> <td>Name</td> <td><input type="text" id="Configuration_Name"></td></tr>       
+            <tr> <td>P</td> <td><input type="text" id="Configuration_P"></td></tr>
+            <tr> <td>I</td> <td><input type="text" id="Configuration_I"></td></tr>
+            <tr> <td>D</td> <td><input type="text" id="Configuration_D"></td></tr>
+            <tr> <td>NrOfSteps</td> <td><input readonly type="text" id="Configuration_NrOfSteps"></td></tr>
+          </table>
+          <input id="pbApplyConfiguration"  type="button" value="Apply"  onclick="SetConfiguration();" />
+          <input id="pbSaveConfiguration"   type="button" value="Save"   onclick="SaveConfiguration();" />
+          <input id="pbReloadConfiguration" type="button" value="Reload" onclick="ReloadConfiguration();" />
+          <input id="pbCloseConfiguration"  type="button" value="Close"  onclick="CloseConfiguration();" />
+        </div>
+      </div>
+
       <div>
         The select Brewage:
         <select id="BrewageList">
-        <input id="pbOpenBrewage" type="button" value="Open Brewage" onclick="WebSocket_OpenBrewage();" />
+        <input id="pbOpenBrewage"       type="button" value="Open Brewage" onclick="OpenBrewage();" disabled />
+        <input id="pbShowConfiguration" type="button" value="Show Configuration" disabled/>
       </div>      
       <div>      
-        Calibration: 
-        <div>
-          <p>
-          Servo Angle Min and Max Output: 
-          <br>
-          MinOutputAngle: <input readonly type="text" id="MinOutputAngle" value="0"> 
-          <input type="submit" value="Set Servo Angle as Min Output" onclick="WebSocket_SetMinOutputAngle();" />
-          <br>
-          MaxOutputAngle: <input readonly type="text" id="MaxOutputAngle" value="0">
-          <input type="submit" value="Set Servo Angle as Max Output" onclick="WebSocket_SetMaxOutputAngle();" /></p>
-        </div>  
         <div>
           Output in %: 
           Process Value: <input readonly type="number" id="OutputPV" value="0"> 
           SetPoint     : <input type="number" step="1" id="OutputSP" value="0">
-          <input type="submit" value="Submit" onclick="WebSocket_SetOutput();" />
+          <input type="submit" value="Submit" onclick="SetOutput();" />
         </div> 
       </div>
       <div>
         Temperatuur: 
         Process Value: <input readonly type="number" id="TemperatuurPV" value="0.0"> 
         SetPoint     : <input type="number" step="0.1" id="TemperatuurSP" value="0.0">
-        <input type="submit" value="Submit" onclick="WebSocket_SetTemperatuur();" />
+        <input type="submit" value="Submit" onclick="SetTemperatuur();" />
       </div>
       <div>
-        Servo Angle: 
-        Process Value: <input readonly type="number" id="ServoAnglePV" value="0"> 
-        SetPoint     : <input type="number" step="1" id="ServoAngleSP" value="1">
-        <input type="submit" value="Submit" onclick="WebSocket_SetServoAngle();" />
-      </div>
-      <div>
-        PID : <br>
-        P: <input readonly type="number" id="PID_P_PV" value="0"> 
-        <input type="number" step="1" id="PID_P_SP" value="10">
-        I:
-        <input readonly type="number" id="PID_I_PV" value="0"> 
-        <input type="number" step="1" id="PID_I_SP" value="1">
-        D:
-        <input readonly type="number" id="PID_D_PV" value="0"> 
-        <input type="number" step="1" id="PID_D_SP" value="1">
-        <input type="submit" value="Submit" onclick="WebSocket_SetPID();" />
-      </div>    
-      <div>
-        <input type="submit" value="Start" onclick="WebSocket_StartRegelaar();" />
-        <input type="submit" value="Stop" onclick="WebSocket_StopRegelaar();" />
-      </div> 
+        <input type="submit" value="Start" onclick="StartRegelaar();" />
+        <input type="submit" value="Stop" onclick="StopRegelaar();" />
+      </div id="tempChart"> 
       <div style="height: 500px">
          <canvas id="myChart"></canvas>
       </div>      

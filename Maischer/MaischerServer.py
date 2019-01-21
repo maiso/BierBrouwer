@@ -12,6 +12,7 @@ from sqlite3 import Error
 import random
 import PID
 from DatabaseInterface import DatabaseInterface
+from stepperMotor import stepperMotor
 
 databaseName = 'BierBrouwer.db'
 
@@ -44,7 +45,7 @@ class MaischerServer():
         self.Temperature = 0.0
         self.servoAngle = 0
 
-        self.config = self.Configuration()
+        #self.config = self.Configuration()
 
         self.db = DatabaseInterface(databaseName)
 
@@ -76,10 +77,6 @@ class MaischerServer():
                 self.P = 10
                 self.I = 1
                 self.D = 1
-        class Servo():
-            def __init__(self):
-                self.MinOutputAngle = 1
-                self.MaxOutputAngle = 180
         class StepperMotor():
             def __init__(self):
                 self.MaxNrOfSteps = 0
@@ -142,12 +139,12 @@ class MaischerServer():
             'GetMeasurement'   : self.handleGetMeasurement,
             'StartStop'        : self.handleStartStop,
         }
-        try:
-            result_json = commandHandlers[parsed_json['Command']](parsed_json)
-            print("Sending to client: " + str(result_json))
-            yield from websocket.send(json.dumps(result_json))
-        except Exception as e:
-            print('Exception :' + str(e))
+        #try:
+        result_json = commandHandlers[parsed_json['Command']](parsed_json)
+        print("Sending to client: " + str(result_json))
+        yield from websocket.send(json.dumps(result_json))
+     #   except Exception as e:
+      #      print('Exception :' + str(e))
 
     def commandOkJson(self, command):
         jsonDict = { "Command" : command,
@@ -166,7 +163,7 @@ class MaischerServer():
     def handleOpenBrewage(self, parsed_json):
         brewages = self.db.getBrewage(parsed_json['Brewage'])
         jsonDict = self.commandOkJson(parsed_json['Command'])
-        jsonDict = {**jsonDict, **brewages[0]}
+        jsonDict = {**jsonDict, **brewages}
 
         return jsonDict
 
@@ -193,18 +190,25 @@ class MaischerServer():
         return jsonDict
 
     def handleSetConfiguration(self, parsed_json):
-        self.MinOutputAngle = float(command.split(' ')[1])
-        self.MaxOutputAngle = float(command.split(' ')[1])
+        ConfigId = parsed_json['Configuration']['ConfigurationId']
+        ConfigName = parsed_json['Configuration']['ConfigurationName']
+        ConfigP = parsed_json['Configuration']['P']
+        ConfigI = parsed_json['Configuration']['I']
+        ConfigD = parsed_json['Configuration']['D']
+        ConfigNrOfSteps = parsed_json['Configuration']['NrOfSteps']
 
-        self.P = float(command.split(' ')[1])
-        self.I = float(command.split(' ')[2])
-        self.D = float(command.split(' ')[3])
-        self.pid.setKp (self.P)
-        self.pid.setKi (self.I)
-        self.pid.setKd (self.D)
+        self.db.updateConfiguration(ConfigId,ConfigName,ConfigP,ConfigI,ConfigD,ConfigNrOfSteps)
+        self.P = float(ConfigP)
+        self.I = float(ConfigI)
+        self.D = float(ConfigD)
 
-    
+        #self.pid.setKp (self.P)
+        #self.pid.setKi (self.I)
+        #self.pid.setKd (self.D)
 
+        jsonDict = self.commandOkJson(parsed_json['Command'])
+        newConfig = self.db.getConfiguration(ConfigId)
+        jsonDict = {**jsonDict, **newConfig}
         return jsonDict
 
     def handleCalibration(self,parsed_json):

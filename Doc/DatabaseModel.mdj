@@ -1995,7 +1995,7 @@
 							"_parent": {
 								"$ref": "AAAAAAFoRqPTuAVoRqI="
 							},
-							"name": "ID",
+							"name": "MashId",
 							"length": 0,
 							"primaryKey": true
 						},
@@ -2115,7 +2115,7 @@
 							"_parent": {
 								"$ref": "AAAAAAFoRqYZBAYLS00="
 							},
-							"name": "MaischSchematicId",
+							"name": "MaischId",
 							"length": 0
 						}
 					]

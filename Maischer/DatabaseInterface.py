@@ -4,7 +4,7 @@ import threading
 import datetime
 import sqlite3
 
-#ID, Name, BrewDate, CalibrationId,MashingId
+#ID, Name, BrewDate, ConfigurationId,MashingId
 class DatabaseInterface():
     def __init__(self, databaseName):
         self.conn = sqlite3.connect(databaseName)
@@ -14,12 +14,12 @@ class DatabaseInterface():
 
         self.createTables()
 
-    # def getCalibration(self,BrewageId):
+    # def getConfiguration(self,BrewageId):
     #     t = (BrewageId,)
     #     self.c.execute('''
     #         SELECT P, I, D, MinServoAngle, MaxServoAngle, NrOfSteps, MaxStepSpeed, DegreesPerStep
     #         FROM Brewages
-    #         LEFT JOIN Calibration ON Brewage.CalibrationId = Calibration.ID;
+    #         LEFT JOIN Configuration ON Brewage.ConfigurationId = Configuration.ID;
     #         WHERE Brewages.ID=?
     #         ''', t)
     #     data = self.c.fetchone()
@@ -28,7 +28,7 @@ class DatabaseInterface():
     #     return jsonRet
 
     def createTables(self):
-        self.createCalibrationTable()
+        self.createConfigurationTable()
         self.createMashingTable()
         self.createSetpointsTable()
         self.createBoilingTable()
@@ -41,7 +41,7 @@ class DatabaseInterface():
         self.createDefaultBrewage()
 
     def createDefaultConfiguration(self):
-        self.insertConfiguration("DefaultCalibration",10,1,1,0,0,0,0,0)    
+        self.insertConfiguration("DefaultConfiguration",10,1,1,4096)    
 
     def createDefaultBrewage(self):
         self.insertBrewage("TestBrew",str(datetime.datetime.now()),0,0,0,0,1,1)
@@ -52,51 +52,56 @@ class DatabaseInterface():
 
 
 #########################################################################
-### Calibration
+### Configuration
 #########################################################################
-    def createCalibrationTable(self):
+    def createConfigurationTable(self):
         self.c.execute('''
-            CREATE TABLE IF NOT EXISTS Calibration(
-               CalibrationId    INTEGER PRIMARY KEY AUTOINCREMENT,
-               CalibrationName  TEXT  NOT NULL,               
+            CREATE TABLE IF NOT EXISTS Configuration(
+               ConfigurationId    INTEGER PRIMARY KEY AUTOINCREMENT,
+               ConfigurationName  TEXT  NOT NULL,               
                P  REAL  ,
                I  REAL  ,
                D  REAL  ,
-               MinServoAngle  REAL,
-               MaxServoAngle  REAL,
-               NrOfSteps      REAL,
-               MaxStepSpeed   REAL,
-               DegreesPerStep REAL
+               NrOfSteps      REAL
             );
             ''')
 
-    def insertConfiguration(self,CalibrationName,P,I,D,MinServoAngle,MaxServoAngle,NrOfSteps,MaxStepSpeed, DegreesPerStep):
+    def insertConfiguration(self,ConfigurationName,P,I,D,NrOfSteps):
         self.c.execute('''
-            INSERT INTO Calibration(
-               CalibrationName,               
+            INSERT INTO Configuration(
+               ConfigurationName,               
                P  ,
                I  ,
                D  ,
-               MinServoAngle  ,
-               MaxServoAngle  ,
-               NrOfSteps      ,
-               MaxStepSpeed   ,
-               DegreesPerStep 
+               NrOfSteps
             ) 
-            VALUES(?,?,?,?,?,?,?,?,?);
-            ''', (CalibrationName,               
+            VALUES(?,?,?,?,?);
+            ''', (ConfigurationName,               
                   P  ,
                   I  ,
                   D  ,
-                  MinServoAngle  ,
-                  MaxServoAngle  ,
-                  NrOfSteps      ,
-                  MaxStepSpeed   ,
-                  DegreesPerStep ))
+                  NrOfSteps ))
         self.conn.commit()  
 
-    def getCalibration(self, CalibrationId):
-        self.c.execute('''SELECT * FROM Calibration WHERE CalibrationId = ?''',(CalibrationId,))
+    def updateConfiguration(self, ConfigurationId,ConfigurationName,P,I,D,NrOfSteps):
+        self.c.execute(
+          ''' UPDATE Configuration
+              SET ConfigurationName = ? ,
+                  P = ? ,
+                  I = ? ,
+                  D = ? ,
+                  NrOfSteps = ?
+              WHERE ConfigurationId = ?''', 
+                (ConfigurationName,               
+                  P  ,
+                  I  ,
+                  D  ,
+                  NrOfSteps,
+                  ConfigurationId ))
+        self.conn.commit()
+
+    def getConfiguration(self, ConfigurationId):
+        self.c.execute('''SELECT * FROM Configuration WHERE ConfigurationId = ?''',(ConfigurationId,))
         return self.c.fetchone()
 
 #########################################################################
@@ -222,13 +227,13 @@ class DatabaseInterface():
                MashingStopTime    TEXT,
                BoilingStartTime   TEXT,
                BoilingStopTime    TEXT,
-               CalibrationId      INT,
+               ConfigurationId      INT,
                MashingId INT,
-               FOREIGN KEY(CalibrationId) REFERENCES Calibration(CalibrationId),
+               FOREIGN KEY(ConfigurationId) REFERENCES Configuration(ConfigurationId),
                FOREIGN KEY(MashingId) REFERENCES Mashing(MashingId)
             );
             ''')
-    def insertBrewage(self, BrewName, BrewDate, MashingStartTime, MashingStopTime,BoilingStartTime, BoilingStopTime, CalibrationId, MashingId):
+    def insertBrewage(self, BrewName, BrewDate, MashingStartTime, MashingStopTime,BoilingStartTime, BoilingStopTime, ConfigurationId, MashingId):
         self.c.execute('''
             INSERT INTO Brewages(
                BrewName           ,
@@ -237,7 +242,7 @@ class DatabaseInterface():
                MashingStopTime    ,
                BoilingStartTime   ,
                BoilingStopTime    ,
-               CalibrationId      ,
+               ConfigurationId      ,
                MashingId
             )
             VALUES(?,?,?,?,?,?,?,?);
@@ -247,7 +252,7 @@ class DatabaseInterface():
                 MashingStopTime,
                 BoilingStartTime,
                 BoilingStopTime,
-                CalibrationId,
+                ConfigurationId,
                 MashingId))
         self.conn.commit()
 
@@ -270,8 +275,8 @@ class DatabaseInterface():
           FROM Brewages 
           WHERE BrewName = ?''',(brewageName,))
         brewage = self.c.fetchone()
-        print('self.getCalibration')
-        calibration = self.getCalibration(brewage['CalibrationId'])
+        print('self.getConfiguration')
+        configuration = self.getConfiguration(brewage['ConfigurationId'])
         print('self.getMashing')
         mashing = self.getMashing(brewage['MashingId'])
         print('self.getSetPoints')
@@ -280,11 +285,11 @@ class DatabaseInterface():
         print (brewage)
         brewage = dict(brewage)
         print (brewage)
-        del brewage['CalibrationId']
+        del brewage['ConfigurationId']
         print (brewage)
         del brewage['MashingId']
         print (brewage)
-        brewage['Calibration'] = dict(calibration)
+        brewage['Configuration'] = dict(configuration)
         print (brewage)
         brewage['Mashing'] = dict(mashing)
         print (brewage)
@@ -292,9 +297,10 @@ class DatabaseInterface():
         print (brewage['Mashing'])        
         print (setpoints)
         brewage['Mashing']['SetPoints'] = setpoints
+        print ("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
         print (brewage)
 
-        #LEFT JOIN Calibration ON Brewages.CalibrationId = Calibration.ID
+        #LEFT JOIN Configuration ON Brewages.ConfigurationId = Configuration.ID
         #LEFT JOIN Mashing ON Brewages.MashingId = Mashing.ID
         #LEFT JOIN Setpoints ON Brewages.MashingId = Setpoints.MashingId
         #print (self.rows)
