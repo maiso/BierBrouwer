@@ -115,7 +115,7 @@ window.chartColors = {
         var colorNames = Object.keys(window.chartColors);     
         var openedBrewage = null
         var openedConfiguration = null
-
+        var dontOverwriteTempSp = false
         function CreateJsonCommand(command){
           var obj = new Object();
           obj.Command = command;
@@ -171,7 +171,10 @@ window.chartColors = {
 
         function GetMeasurement(){
           var handleGetMeasurementAnswer = function (jsonobj) {
-            document.getElementById("TemperatureSP").value = jsonobj.TemperatureSetPoint
+            if(!dontOverwriteTempSp)
+            {
+              document.getElementById("TemperatureSP").value = jsonobj.TemperatureSetPoint
+            }
             document.getElementById("TemperaturePV").value = jsonobj.TemperatureProcessValue  
             
             ChartConfig.data.datasets[0].data.push({
@@ -199,10 +202,43 @@ window.chartColors = {
             document.getElementById("TemperatureSP").value = jsonobj.SetPoint
           }
 
-          cmd = CreateJsonCommand("SetTemperatureSetpoint")
+          cmd = CreateJsonCommand("SetTemperature")
           cmd.SetPoint = setPoint
           WebSocketClient(cmd,handleSetTemperatureAnswer)
         }
+
+        function SetMotorAngle(){
+          var motorAngle = document.getElementById("MotorAngleSP").value;          
+
+          var handleSetMotorAngleAnswer = function (jsonobj) {
+            GetMotorAngle()
+          }
+
+          cmd = CreateJsonCommand("SetMotorAngle")
+          cmd.Angle = motorAngle
+          WebSocketClient(cmd,handleSetMotorAngleAnswer)
+        }
+
+        function GetMotorAngle(){
+          var handleGetMotorAngleAnswer = function (jsonobj) {
+            document.getElementById("MotorAnglePV").value = jsonobj.Angle
+            if(document.getElementById("MotorAnglePV").value != document.getElementById("MotorAngleSP").value){
+              setTimeout(GetMotorAngle, 1000); //Clear the flag after 4 seconds
+            }
+          }
+
+          cmd = CreateJsonCommand("GetMotorAngle")
+          WebSocketClient(cmd,handleGetMotorAngleAnswer)
+        }
+
+        function ZeroMotorAngle(){
+          var handleZeroMotorAngleAnswer = function (jsonobj) {
+          }
+
+          cmd = CreateJsonCommand("ZeroMotorAngle")
+          WebSocketClient(cmd,handleZeroMotorAngleAnswer)
+        }
+
         /*
         function SetOutput(){
           var setPoint = document.getElementById("OutputSP").value;          
@@ -283,7 +319,7 @@ window.chartColors = {
           cmd.Configuration.P = document.getElementById("Configuration_P").value;
           cmd.Configuration.I = document.getElementById("Configuration_I").value;
           cmd.Configuration.D = document.getElementById("Configuration_D").value;
-          cmd.Configuration.NrOfSteps = document.getElementById("Configuration_NrOfSteps").value;
+          cmd.Configuration.StepsPerRevolution = document.getElementById("Configuration_StepsPerRevolution").value;
 
           WebSocketClient(cmd, handleSetOutputAnswer)
         }
@@ -305,7 +341,7 @@ window.chartColors = {
             document.getElementById("Configuration_P").value    = openedConfiguration.P;
             document.getElementById("Configuration_I").value    = openedConfiguration.I;
             document.getElementById("Configuration_D").value    = openedConfiguration.D;
-            document.getElementById("Configuration_NrOfSteps").value = openedConfiguration.NrOfSteps;
+            document.getElementById("Configuration_StepsPerRevolution").value = openedConfiguration.StepsPerRevolution;
           }
         }
 
@@ -319,6 +355,11 @@ window.chartColors = {
             // Show the share pop up window when the share icon is clicked
             document.getElementById("pbShowConfiguration").addEventListener("click", function(){
               document.getElementById("configurationPopup").style.display = "inline";
+            });
+
+            document.getElementById("TemperatureSP").addEventListener("input", function () {
+                dontOverwriteTempSp = true;
+                setTimeout(function() {dontOverwriteTempSp = false;}, 4000); //Clear the flag after 4 seconds
             });
 
             GetBrewages()

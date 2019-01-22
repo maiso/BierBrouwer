@@ -14,19 +14,6 @@ class DatabaseInterface():
 
         self.createTables()
 
-    # def getConfiguration(self,BrewageId):
-    #     t = (BrewageId,)
-    #     self.c.execute('''
-    #         SELECT P, I, D, MinServoAngle, MaxServoAngle, NrOfSteps, MaxStepSpeed, DegreesPerStep
-    #         FROM Brewages
-    #         LEFT JOIN Configuration ON Brewage.ConfigurationId = Configuration.ID;
-    #         WHERE Brewages.ID=?
-    #         ''', t)
-    #     data = self.c.fetchone()
-    #     jsonRet = json.dumps(data)
-    #     #print (jsonRet)
-    #     return jsonRet
-
     def createTables(self):
         self.createConfigurationTable()
         self.createMashingTable()
@@ -35,10 +22,6 @@ class DatabaseInterface():
         self.createHopMomentsTable()
         self.createBrewagesTable()
         self.createMeasurementsTable()
-
-        self.createDefaultConfiguration()
-        self.createDefaultMashing()
-        self.createDefaultBrewage()
 
     def createDefaultConfiguration(self):
         self.insertConfiguration("DefaultConfiguration",10,1,1,4096)    
@@ -62,42 +45,42 @@ class DatabaseInterface():
                P  REAL  ,
                I  REAL  ,
                D  REAL  ,
-               NrOfSteps      REAL
+               StepsPerRevolution  REAL
             );
             ''')
 
-    def insertConfiguration(self,ConfigurationName,P,I,D,NrOfSteps):
+    def insertConfiguration(self,ConfigurationName,P,I,D,StepsPerRevolution):
         self.c.execute('''
             INSERT INTO Configuration(
                ConfigurationName,               
                P  ,
                I  ,
                D  ,
-               NrOfSteps
+               StepsPerRevolution
             ) 
             VALUES(?,?,?,?,?);
             ''', (ConfigurationName,               
                   P  ,
                   I  ,
                   D  ,
-                  NrOfSteps ))
+                  StepsPerRevolution ))
         self.conn.commit()  
 
-    def updateConfiguration(self, ConfigurationId,ConfigurationName,P,I,D,NrOfSteps):
+    def updateConfiguration(self, ConfigurationId,ConfigurationName,P,I,D,StepsPerRevolution):
         self.c.execute(
           ''' UPDATE Configuration
               SET ConfigurationName = ? ,
                   P = ? ,
                   I = ? ,
                   D = ? ,
-                  NrOfSteps = ?
+                  StepsPerRevolution = ?
               WHERE ConfigurationId = ?''', 
                 (ConfigurationName,               
                   P  ,
                   I  ,
                   D  ,
-                  NrOfSteps,
-                  ConfigurationId ))
+                  StepsPerRevolution,
+                  ConfigurationId))
         self.conn.commit()
 
     def getConfiguration(self, ConfigurationId):
@@ -326,6 +309,21 @@ class DatabaseInterface():
                FOREIGN KEY(BrewageId) REFERENCES Brewages(BrewageId)
             );
             ''')
+
+    def insertMeasurement(self, BrewageId, SetPoint, Temperature, PIDOutput):
+        self.c.execute('''
+          INSERT INTO Measurements(
+             BrewageId,
+             MeasurementTime,
+             SetPoint,
+             Temperature,
+             PIDOutput
+          ) 
+          VALUES(?,?,?,?,?);
+          ''', (BrewageId, str(datetime.datetime.now()), float(SetPoint), float(Temperature),float(PIDOutput)))
+        self.conn.commit()
+
+
 
 # if __Name__ == "__main__":
 #     print ("starting...")

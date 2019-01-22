@@ -12,7 +12,7 @@ from sqlite3 import Error
 import random
 import PID
 from DatabaseInterface import DatabaseInterface
-#from StepperMotor import StepperMotor
+from StepperMotor import StepperMotor
 
 databaseName = 'BierBrouwer.db'
 
@@ -20,9 +20,15 @@ class MaischerServer():
     def __init__(self):
         self.TemperatureSetPoint = float(0.0)
         self.Temperature = 0.0
-        self.NrOfSteps = 0
+        self.StepsPerRevolution = 0
 
+        self.brewageId = None
         self.db = DatabaseInterface(databaseName)
+
+        self.db.createDefaultConfiguration()
+        self.db.createDefaultMashing()
+        self.db.createDefaultBrewage()
+
 
         self.P = 10
         self.I = 1
@@ -35,6 +41,8 @@ class MaischerServer():
         self.pid = PID.PID(self.P, self.I, self.D)
         self.pid.SetPoint = self.TemperatureSetPoint
         self.pid.setSampleTime(1)
+
+        self.motor = StepperMotor()
 
         self.thread = threading.Thread(target=self.run, args=())
         self.runGetTempThread = True
@@ -66,6 +74,8 @@ class MaischerServer():
 
     def run(self):
         prevOutputPv = -1
+        dbInterface = DatabaseInterface(databaseName)
+
         while(self.runGetTempThread):
             self.Temperature = self.ReadDS18B20("28-000008717fea")
             if self.regelaarActive == True:
@@ -83,6 +93,7 @@ class MaischerServer():
                 #else:
                 #    self.servo.setAngle(0) # if it hasn't changed stop the trembling of the servo
 
+                dbInterface.insertMeasurement(self.brewageId,self.TemperatureSetPoint,self.Temperature,self.outputPV)
                 prevOutputPv = self.outputPV
 #                print ( "Target: %.1f C | Current: %.1f C | OutputPV: %d" % (self.TemperatureSetPoint, self.Temperature, self.outputPV))
             time.sleep(1)
@@ -101,6 +112,9 @@ class MaischerServer():
             'GetMeasurement'   : self.handleGetMeasurement,
             'StartStop'        : self.handleStartStop,
             'SetTemperature'   : self.handleSetTemperature,
+            'SetMotorAngle'    : self.handleSetMotorAngle,
+            'GetMotorAngle'    : self.handleGetMotorAngle,
+            'ZeroMotorAngle'   : self.handleZeroMotorAngle,
         }
         #try:
         result_json = commandHandlers[parsed_json['Command']](parsed_json)
@@ -125,15 +139,15 @@ class MaischerServer():
 
     def handleOpenBrewage(self, parsed_json):
         brewages = self.db.getBrewage(parsed_json['Brewage'])
-
+        self.brewageId = brewages['BrewageId']
         self.TemperatureSetPoint = brewages['Mashing']['SetPoints'][0]['SetPoint']
-
+        self.motor.setMotorConfig(brewages['Configuration']['StepsPerRevolution'])
         jsonDict = self.commandOkJson(parsed_json['Command'])
         jsonDict = {**jsonDict, **brewages}
         return jsonDict
 
     def handleSetTemperature(self, parsed_json):
-        receivedSetPoint = parsed_json['SetPoint']
+        receivedSetPoint = int(parsed_json['SetPoint'])
         if receivedSetPoint < 0:
             receivedSetPoint = 0
         if receivedSetPoint > 100:
@@ -141,7 +155,7 @@ class MaischerServer():
 
         self.TemperatureSetPoint = receivedSetPoint
         self.pid.SetPoint = self.TemperatureSetPoint
-        jsonDict = { "Command" : command,
+        jsonDict = { "Command" : parsed_json['Command'],
                      "Result"  : 'Ok',
                      "SetPoint" : str(self.TemperatureSetPoint)}
         return jsonDict
@@ -161,13 +175,13 @@ class MaischerServer():
         ConfigP         = parsed_json['Configuration']['P']
         ConfigI         = parsed_json['Configuration']['I']
         ConfigD         = parsed_json['Configuration']['D']
-        ConfigNrOfSteps = parsed_json['Configuration']['NrOfSteps']
+        ConfigStepsPerRevolution = parsed_json['Configuration']['StepsPerRevolution']
 
-        self.db.updateConfiguration(ConfigId,ConfigName,ConfigP,ConfigI,ConfigD,ConfigNrOfSteps)
+        self.db.updateConfiguration(ConfigId,ConfigName,ConfigP,ConfigI,ConfigD,ConfigStepsPerRevolution)
         self.P = float(ConfigP)
         self.I = float(ConfigI)
         self.D = float(ConfigD)
-        self.NrOfSteps = int(ConfigNrOfSteps)
+        self.StepsPerRevolution = int(ConfigStepsPerRevolution)
 
         jsonDict = self.commandOkJson(parsed_json['Command'])
         newConfig = self.db.getConfiguration(ConfigId)
@@ -179,6 +193,26 @@ class MaischerServer():
         jsonDict = self.commandOkJson(parsed_json['Command'])
         jsonDict["Start"] = self.regelaarActive
         return jsonDict
+
+    def handleSetMotorAngle(self, parsed_json):
+        jsonDict = self.commandOkJson(parsed_json['Command'])
+        motorAngle = parsed_json['Angle']
+
+        self.motor.angleSP = int(motorAngle)
+
+        return jsonDict
+
+    def handleGetMotorAngle(self, parsed_json):
+        jsonDict = self.commandOkJson(parsed_json['Command'])
+        jsonDict['Angle'] = self.motor.anglePV
+        return jsonDict
+
+    def handleZeroMotorAngle(self, parsed_json):
+        jsonDict = self.commandOkJson(parsed_json['Command'])
+        self.motor.zero()
+        return jsonDict
+
+
 
 if __name__ == "__main__":
     MaischerServer = MaischerServer()
