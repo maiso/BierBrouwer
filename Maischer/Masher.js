@@ -151,6 +151,11 @@ window.chartColors = {
             document.getElementById("pbOpenBrewage").disabled = true;
             document.getElementById("pbShowConfiguration").disabled = false;
             document.getElementById("pbStartPID").disabled = false;
+            document.getElementById("selectBrewagePopup").style.display = "none";
+
+            document.getElementById("headerText").innerHTML = "Brew:" + document.getElementById("BrewageList").value;
+
+
           }
           var selectList = document.getElementById("BrewageList");
           var selectedDatabase = selectList.options[selectList.selectedIndex].text;

@@ -115,6 +115,7 @@ class MaischerServer():
             'SetMotorAngle'    : self.handleSetMotorAngle,
             'GetMotorAngle'    : self.handleGetMotorAngle,
             'ZeroMotorAngle'   : self.handleZeroMotorAngle,
+            'MaxMotorAngle'   : self.handleMaxMotorAngle,
         }
         #try:
         result_json = commandHandlers[parsed_json['Command']](parsed_json)
@@ -210,6 +211,11 @@ class MaischerServer():
     def handleZeroMotorAngle(self, parsed_json):
         jsonDict = self.commandOkJson(parsed_json['Command'])
         self.motor.zero()
+        return jsonDict
+
+    def handleMaxMotorAngle(self, parsed_json):
+        jsonDict = self.commandOkJson(parsed_json['Command'])
+        self.motor.max()
         return jsonDict
 
 

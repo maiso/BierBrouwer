@@ -10,37 +10,51 @@
    <body>
       <div id="configurationPopup">
         <div class="flex-container">
-          <table id="configurationTable">
-            <tr style="display:none;">  <td>Id</td> <td><input readonly type="text" id="Configuration_Id"></td></tr>    
-            <tr> <td>Name</td> <td><input type="text" id="Configuration_Name"></td></tr>       
-            <tr> <td>P</td> <td><input type="text" id="Configuration_P"></td></tr>
-            <tr> <td>I</td> <td><input type="text" id="Configuration_I"></td></tr>
-            <tr> <td>D</td> <td><input type="text" id="Configuration_D"></td></tr>
-            <tr> <td>StepsPerRevolution</td> <td><input readonly type="text" id="Configuration_StepsPerRevolution"></td></tr>
-          </table>
           <div>
-            <input id="pbApplyConfiguration"  type="button" value="Apply"  onclick="SetConfiguration();" />
-            <input id="pbSaveConfiguration"   type="button" value="Save"   onclick="SaveConfiguration();" />
-            <input id="pbReloadConfiguration" type="button" value="Reload" onclick="ReloadConfiguration();" />
-            <input id="pbCloseConfiguration"  type="button" value="Close"  onclick="CloseConfiguration();" />
+            <table id="configurationTable">
+              <tr style="display:none;">  <td>Id</td> <td><input readonly type="text" id="Configuration_Id"></td></tr>    
+              <tr> <td>Name</td> <td><input type="text" id="Configuration_Name"></td></tr>       
+              <tr> <td>P</td> <td><input type="text" id="Configuration_P"></td></tr>
+              <tr> <td>I</td> <td><input type="text" id="Configuration_I"></td></tr>
+              <tr> <td>D</td> <td><input type="text" id="Configuration_D"></td></tr>
+              <tr> <td>StepsPerRevolution</td> <td><input readonly type="text" id="Configuration_StepsPerRevolution"></td></tr>
+            </table>
+            <div>
+                Motor Angle: 
+                Process Value: <input readonly type="text" id="MotorAnglePV" value="0"> 
+                SetPoint     : <input type="number" step="1" id="MotorAngleSP" value="0">
+                <input type="submit" value="Submit"      onclick="SetMotorAngle();" />
+                <input type="submit" value="Set as Zero" onclick="ZeroMotorAngle();" />
+                <input type="submit" value="Set as Max"  onclick="MaxMotorAngle();" disabled/>
+            </div>
+            <div>
+              <input id="pbApplyConfiguration"  type="button" value="Apply"  onclick="SetConfiguration();" />
+              <input id="pbSaveConfiguration"   type="button" value="Save"   onclick="SaveConfiguration();" />
+              <input id="pbReloadConfiguration" type="button" value="Reload" onclick="ReloadConfiguration();" />
+              <input id="pbCloseConfiguration"  type="button" value="Close"  onclick="CloseConfiguration();" />
+            </div>
           </div>
         </div>
       </div>
 
+      <div id="selectBrewagePopup">
+        <div class="flex-container">
+          <div>
+            <p>Select Brewage:</p>
+            <select id="BrewageList">
+            <input id="pbOpenBrewage"       type="button" value="Open Brewage" onclick="OpenBrewage();" disabled />
+          </div>  
+        </div>
+      </div>
+
       <div id="wrapper"> 
+        <div class="header">
+          <p id="headerText"><strong>Brew: </strong></p>
+        </div>         
         <div>
-          The select Brewage:
-          <select id="BrewageList">
-          <input id="pbOpenBrewage"       type="button" value="Open Brewage" onclick="OpenBrewage();" disabled />
-          <input id="pbShowConfiguration" type="button" value="Show Configuration" disabled/>
-        </div>      
-        <div>
-          Motor Angle: 
-          Process Value: <input readonly type="text" id="MotorAnglePV" value="0"> 
-          SetPoint     : <input type="number" step="1" id="MotorAngleSP" value="0">
-          <input type="submit" value="Submit" onclick="SetMotorAngle();" />
-          <input type="submit" value="Set as Zero" onclick="ZeroMotorAngle();" />
-        </div>       
+        <input id="pbShowConfiguration" type="button" value="Brew Configuration" disabled/>
+        </div>
+      
         <div>
           Temperature: 
           Process Value: <input readonly type="text" id="TemperaturePV" value="0.0"> 
