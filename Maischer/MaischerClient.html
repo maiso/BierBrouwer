@@ -6,11 +6,13 @@
       <link rel="stylesheet" type="text/css" href="Masher.css">
       <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.bundle.js"></script>
       <script type = "text/javascript" src="Masher.js"> </script>
+      <script src="gauge.min.js"></script> 
+
    </head>
    <body>
-      <div id="configurationPopup">
+      <div id="configurationPopup" class="popClass">
         <div class="flex-container">
-          <div>
+          <div class="configurationLayout">
             <table id="configurationTable">
               <tr style="display:none;">  <td>Id</td> <td><input readonly type="text" id="Configuration_Id"></td></tr>    
               <tr> <td>Name</td> <td><input type="text" id="Configuration_Name"></td></tr>       
@@ -19,6 +21,7 @@
               <tr> <td>D</td> <td><input type="text" id="Configuration_D"></td></tr>
               <tr> <td>StepsPerRevolution</td> <td><input readonly type="text" id="Configuration_StepsPerRevolution"></td></tr>
             </table>
+            <hr>
             <div>
                 Motor Angle: 
                 Process Value: <input readonly type="text" id="MotorAnglePV" value="0"> 
@@ -27,6 +30,7 @@
                 <input type="submit" value="Set as Zero" onclick="ZeroMotorAngle();" />
                 <input type="submit" value="Set as Max"  onclick="MaxMotorAngle();" disabled/>
             </div>
+            <hr>
             <div>
               <input id="pbApplyConfiguration"  type="button" value="Apply"  onclick="SetConfiguration();" />
               <input id="pbSaveConfiguration"   type="button" value="Save"   onclick="SaveConfiguration();" />
@@ -46,27 +50,38 @@
           </div>  
         </div>
       </div>
-
+      <div class="header">
+        <p id="headerText"><strong>Brew: </strong></p>
+      </div>  
       <div id="wrapper"> 
-        <div class="header">
-          <p id="headerText"><strong>Brew: </strong></p>
-        </div>         
-        <div>
-        <input id="pbShowConfiguration" type="button" value="Brew Configuration" disabled/>
+        <div > 
+          <div id="userInputSection">
+            <input id="pbShowConfiguration" type="button" value="Brew Configuration" disabled/>      
+            <div>
+              Temperature: 
+              Process Value: <input readonly type="text" id="TemperaturePV" value="0.0"> 
+              SetPoint     : <input type="number" step="0.1" id="TemperatureSP" value="0.0">
+              <input type="submit" value="Submit" onclick="SetTemperature();" />
+            </div>
+            <div>
+              <input id="pbStartPID" type="button" value="Start" onclick="StartRegelaar();" disabled/>
+              <input id="pbStartPID" type="button" value="Pauze" onclick="StartRegelaar();" disabled/>
+              <input id="pbStopPID"  type="button" value="Finish" onclick="StopRegelaar();" disabled />
+              <label><input type='checkbox' onclick='StartGetMeasurements(this);'>Get Measurements</label>
+            </div>
+          </div>
+          <div id="tempControl"> 
+            <div id="tempButtons">
+              <div>
+                <img id="tempUp" class="tempButton" src="up-arrow.svg">
+              </div>
+              <div>
+                <img id="tempDown" class="tempButton" src="up-arrow.svg">
+              </div>
+            </div>
+            <canvas id="tempGauge" data-type="radial-gauge"></canvas>
+          </div>
         </div>
-      
-        <div>
-          Temperature: 
-          Process Value: <input readonly type="text" id="TemperaturePV" value="0.0"> 
-          SetPoint     : <input type="number" step="0.1" id="TemperatureSP" value="0.0">
-          <input type="submit" value="Submit" onclick="SetTemperature();" />
-        </div>
-        <div>
-          <input id="pbStartPID" type="button" value="Start" onclick="StartRegelaar();" disabled/>
-          <input id="pbStartPID" type="button" value="Pauze" onclick="StartRegelaar();" disabled/>
-          <input id="pbStopPID"  type="button" value="Finish" onclick="StopRegelaar();" disabled />
-          <label><input type='checkbox' onclick='StartGetMeasurements(this);'>Get Measurements</label>
-        </div> 
         <canvas id="myChart"></canvas>
       </div>   
    </body>
