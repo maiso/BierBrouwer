@@ -50,39 +50,34 @@
           </div>  
         </div>
       </div>
+
       <div class="header">
         <p id="headerText"><strong>Brew: </strong></p>
       </div>  
+
       <div id="wrapper"> 
-        <div > 
-          <div id="userInputSection">
-            <input id="pbShowConfiguration" type="button" value="Brew Configuration" disabled/>      
-            <div>
-              Temperature: 
-              Process Value: <input readonly type="text" id="TemperaturePV" value="0.0"> 
-              SetPoint     : <input type="number" step="0.1" id="TemperatureSP" value="0.0">
-              <input type="submit" value="Submit" onclick="SetTemperature();" />
-            </div>
-            <div>
-              <input id="pbStartPID" type="button" value="Start" onclick="StartRegelaar();" disabled/>
-              <input id="pbStartPID" type="button" value="Pauze" onclick="StartRegelaar();" disabled/>
-              <input id="pbStopPID"  type="button" value="Finish" onclick="StopRegelaar();" disabled />
-              <label><input type='checkbox' onclick='StartGetMeasurements(this);'>Get Measurements</label>
-            </div>
+        <div id="userInputSection">   
+          <div id="startStopHolder" class="btnHolder">
+            <input id="pbStartPID" class="btn" type="image" src="images/play_arrow_48px_352072.svg" onclick="StartRegelaar();" disabled/>
+            <input id="pbStopPID"  class="btn" type="image" src="images/stop_48px_352144.svg" onclick="StopRegelaar();" disabled/>
+            <label><input type='checkbox' onclick='StartGetMeasurements(this);'>Get Measurements</label>
           </div>
-          <div id="tempControl"> 
-            <div id="tempButtons">
-              <div>
-                <img id="tempUp" class="tempButton" src="up-arrow.svg">
-              </div>
-              <div>
-                <img id="tempDown" class="tempButton" src="up-arrow.svg">
-              </div>
-            </div>
-            <canvas id="tempGauge" data-type="radial-gauge"></canvas>
+           
+          <div id="configHolder" class="btnHolder">
+            <input id="pbShowConfiguration" class="btn" type="image" src="images/settings_48px_352095.svg" disabled/>   
+          </div>  
+
+          <div id="tempControl" class="btnHolder">
+            <img id="tempUp" class="btn" src="images/arrow_up_48px_352469.svg" ></img>
+            <h1  id="TemperatureSP" style="font-size:1vw">0.0°C</h1> 
+            <img id="tempDown" class="btn" src="images/arrow_down_48px_352466.svg"/></img>
           </div>
+        </div> 
+        <hr/>
+        <div id="chartGauge">
+          <canvas id="myChart"></canvas>
+          <canvas id="tempGauge" data-type="radial-gauge"></canvas>
         </div>
-        <canvas id="myChart"></canvas>
       </div>   
    </body>
 </html>

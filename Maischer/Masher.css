@@ -30,7 +30,7 @@ body {
     padding: 10;
 }
 
-#myChart {
+#chartGauge {
   flex: 1;
   border: 1px solid black;
   margin: 10px;
@@ -95,28 +95,28 @@ containing a popup stand out */
 	text-align: center;
 }*/
 
-#tempUp{
-    width:50px;
-	height:50px;
-}
-#tempDown{
-    width:50px;
-	height:50px;
-    transform: rotate(180deg);
+.btnHolder{
+    display: inline-block;		
+      position: relative;
+  border: 3px solid green; 
 }
 
-#userInputSection {
+.btn{
+    width:100px;
+	height:100px;
+}
+
+#tempSetpoint{
+  font-size: 40px;
+}
+/*#userInputSection {
 	 	 float: left;
+}*/	
+
+#configHolder {
+  margin: 0 auto;
 }
 
-#tempControl{
-	/*position: absolute;
-	right: 0%;*/
-	float : right;
-	vertical-align: middle
-	/*top: 50%;
-	transform: translate(0%, -50%);s*/
-}
 
 #tempButtons{
  	 float: left;
@@ -124,4 +124,23 @@ containing a popup stand out */
 }
 #tempGauge{
 	 float: left;
+}
+
+#tempUp{
+	display: inline-block;
+}
+
+#tempDown{
+	display: inline-block;
+}
+
+#TemperatureSP{
+	display: inline-block;	
+	text-align: center;
+	vertical-align: middle;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+	transform: translate(-50%, -50%);
+
 }
