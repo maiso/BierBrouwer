@@ -7,9 +7,8 @@
       <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.bundle.js"></script>
       <script type = "text/javascript" src="Masher.js"> </script>
       <script src="gauge.min.js"></script> 
-
    </head>
-   <body>
+   <body >
       <div id="configurationPopup" class="popClass">
         <div class="flex-container">
           <div class="configurationLayout">
@@ -51,33 +50,28 @@
         </div>
       </div>
 
+    <div id="wrapper">
       <div class="header">
         <p id="headerText"><strong>Brew: </strong></p>
+        <input id="pbShowConfiguration" type="image" src="images/settings_48px_352095.svg" disabled/>  
       </div>  
-
-      <div id="wrapper"> 
-        <div id="userInputSection">   
-          <div id="startStopHolder" class="btnHolder">
-            <input id="pbStartPID" class="btn" type="image" src="images/play_arrow_48px_352072.svg" onclick="StartRegelaar();" disabled/>
-            <input id="pbStopPID"  class="btn" type="image" src="images/stop_48px_352144.svg" onclick="StopRegelaar();" disabled/>
-            <label><input type='checkbox' onclick='StartGetMeasurements(this);'>Get Measurements</label>
-          </div>
-           
-          <div id="configHolder" class="btnHolder">
-            <input id="pbShowConfiguration" class="btn" type="image" src="images/settings_48px_352095.svg" disabled/>   
-          </div>  
-
-          <div id="tempControl" class="btnHolder">
-            <img id="tempUp" class="btn" src="images/arrow_up_48px_352469.svg" ></img>
-            <h1  id="TemperatureSP" style="font-size:1vw">0.0°C</h1> 
-            <img id="tempDown" class="btn" src="images/arrow_down_48px_352466.svg"/></img>
-          </div>
-        </div> 
-        <hr/>
-        <div id="chartGauge">
-          <canvas id="myChart"></canvas>
-          <canvas id="tempGauge" data-type="radial-gauge"></canvas>
+      <div id="userInputSection">   
+        <div id="startStopHolder" class="controlHolder">
+          <input id="pbStartPID" class="btn" type="image" src="images/play_arrow_48px_352072.svg" onclick="StartRegelaar();" disabled/>
+          <input id="pbStopPID"  class="btn" type="image" src="images/stop_48px_352144.svg" onclick="StopRegelaar();" disabled/>
         </div>
-      </div>   
+        
+        <div id="gaugeHolder" class="controlHolder">
+          <canvas id="tempGauge" data-type="radial-gauge"></canvas> 
+        </div>  
+
+        <div id="tempControl" class="controlHolder">
+          <input id="tempUp"   class="btn" type="image" src="images/arrow_up_48px_352469.svg" onclick="IncSetpoint();" disabled ></img>
+          <h1  id="TemperatureSP" style="font-size:1vw">0.0°C</h1> 
+          <input id="tempDown" class="btn"type="image" src="images/arrow_down_48px_352466.svg" onclick="DecSetpoint();" disabled></img>
+        </div>
+      </div> 
+      <div id="henkie"> <canvas id="myChart"></canvas></div>
+      </div> 
    </body>
 </html>

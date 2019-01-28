@@ -5,12 +5,7 @@ hmtl, body {
     overflow-x: hidden;
     overflow-y: hidden;
 	margin : 0px;
-
-}
-
-body {
-	/*font-family: Bradley Hand, cursive;*/
-	font-size: 12px;
+ 	box-sizing: border-box;
 }
 
 .header {
@@ -20,20 +15,30 @@ body {
   font-size: 18px;
   margin: 0;
   padding: 0;
+  display: block;
+  position: relative;
+  height: auto;
 }
 
 #wrapper {
-  display: flex;  /* use the flex model */
-  min-height: 100%;
-  flex-direction: column;  /* learn more: http://philipwalton.github.io/solved-by-flexbox/demos/sticky-footer/ */
-    margin: 10;
-    padding: 10;
+	display: flex;  /* use the flex model */
+	  min-height: 100vh;
+	  	height: 100%;
+
+	flex-direction: column;  /* learn more: http://philipwalton.github.io/solved-by-flexbox/demos/sticky-footer/ */
+
 }
 
-#chartGauge {
+#myChart {
   flex: 1;
   border: 1px solid black;
+}
+#henkie {
+  flex: 1;
+/*  border: 1px solid black;
   margin: 10px;
+    background: orange;*/
+
 }
 
 /* A page filling opaque layer that overlays the page to make the inside div 
@@ -89,34 +94,32 @@ containing a popup stand out */
 	box-shadow: 0px 20px 20px #000;
 }
 
-/*.flex-container > div{
-	width: 100px;
-	height: 100px;
-	text-align: center;
-}*/
-
-.btnHolder{
+.controlHolder{
     display: inline-block;		
-      position: relative;
-  border: 3px solid green; 
+    position: relative;
+    border: 3px solid green; 
 }
 
 .btn{
     width:100px;
 	height:100px;
+	    border: 3px solid purple; 
+
 }
 
-#tempSetpoint{
-  font-size: 40px;
-}
-/*#userInputSection {
-	 	 float: left;
-}*/	
+#startStopHolder{
+	width:400px;
+		height:100px;
 
-#configHolder {
+}
+#tempControl{
+	width:400px;
+		height:100px;
+
+}
+#gaugeHolder {
   margin: 0 auto;
 }
-
 
 #tempButtons{
  	 float: left;
@@ -124,23 +127,59 @@ containing a popup stand out */
 }
 #tempGauge{
 	 float: left;
+	 width: 200px;
+	 height: 200px;
 }
 
 #tempUp{
 	display: inline-block;
-}
-
-#tempDown{
-	display: inline-block;
+   /* position: relative;
+	vertical-align: middle;*/
+	  margin-left: auto;
+  margin-right: auto;
 }
 
 #TemperatureSP{
 	display: inline-block;	
-	text-align: center;
 	vertical-align: middle;
-    position: absolute;
+	margin: 20px;
+	/*text-align: center;
+	
+	margin-left: auto;
+  	margin-right: auto;
+  	margin: auto;
+    position: relative;
     top: 50%;
     left: 50%;
-	transform: translate(-50%, -50%);
+	transform: translate(-50%, -50%);*/
+	height: 100px;
+}
 
+#tempDown{
+	display: inline-block;
+	/*vertical-align: middle;
+    position: relative;*/
+      margin-left: auto;
+  margin-right: auto;
+}
+
+
+
+#pbShowConfiguration{
+	/*float: right;
+	display: inline-block;	*/
+		cursor: pointer;
+	position: absolute;
+
+	padding: 8px 16px;
+	right: 0%;
+	top: 50%;
+	transform: translate(0%, -50%);
+
+}
+
+#userInputSection{
+    border: 3px solid orange; 
+    margin-left: auto;
+    margin-right: auto;
 }

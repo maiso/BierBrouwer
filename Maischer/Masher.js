@@ -354,7 +354,7 @@ window.chartColors = {
             //alert("Reload")
 
             var ctx = document.getElementById("myChart").getContext('2d');
-            ctx.height = 500;
+            // ctx.height = 500;
             window.myLine = new Chart(ctx, ChartConfig);   
 
             // Show the share pop up window when the share icon is clicked
