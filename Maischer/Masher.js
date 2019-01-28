@@ -367,6 +367,45 @@ window.chartColors = {
                 setTimeout(function() {dontOverwriteTempSp = false;}, 4000); //Clear the flag after 4 seconds
             });
 
+            var gauge = new RadialGauge({
+                renderTo: 'tempGauge',
+                width: 300,
+                height: 300,
+                units: "°C",
+                minValue: 0,
+                startAngle: 50,
+                ticksAngle: 260,
+                valueBox: true,
+                maxValue: 120,
+                majorTicks: [
+                    "0",
+                    "20",
+                    "40",
+                    "60",
+                    "80",
+                    "100",
+                    "120"
+                ],
+                minorTicks: 2,
+                strokeTicks: true,
+                highlights: [
+                    {
+                        "from": 95,
+                        "to": 120,
+                        "color": "rgba(200, 50, 50, .75)"
+                    }
+                ],
+                colorPlate: "#fff",
+                borderShadowWidth: 0,
+                borders: false,
+                needleType: "arrow",
+                needleWidth: 2,
+                needleCircleSize: 7,
+                needleCircleOuter: true,
+                needleCircleInner: false,
+                animationDuration: 1500,
+                animationRule: "linear"
+            }).draw();
             GetBrewages()
 
             // var intervalID = setInterval(GetTemperature, 1000);
