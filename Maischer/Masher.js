@@ -153,7 +153,7 @@ window.chartColors = {
             document.getElementById("pbStartPID").disabled = false;
             document.getElementById("selectBrewagePopup").style.display = "none";
 
-            document.getElementById("headerText").innerHTML = "Brew:" + document.getElementById("BrewageList").value;
+            document.getElementById("headerText").innerHTML = document.getElementById("BrewageList").value;
 
 
           }
@@ -176,12 +176,9 @@ window.chartColors = {
 
         function GetMeasurement(){
           var handleGetMeasurementAnswer = function (jsonobj) {
-            if(!dontOverwriteTempSp)
-            {
-              document.getElementById("TemperatureSP").value = jsonobj.TemperatureSetPoint
-            }
-            document.getElementById("TemperaturePV").value = jsonobj.TemperatureProcessValue  
-            
+            document.getElementById("TemperatureSP").innerHTML = jsonobj.TemperatureSetPoint + ' °C'
+            window.gauge.value = jsonobj.TemperatureProcessValue;
+            window.gauge.update();
             ChartConfig.data.datasets[0].data.push({
                         x: new Date(Date.now()),
                         y: jsonobj.TemperatureProcessValue })
@@ -259,6 +256,7 @@ window.chartColors = {
             document.getElementById("pbStopPID").disabled = false;
             document.getElementById("pbStartPID").disabled = true;
             if(intervalID == null){
+              GetMeasurement();
               intervalID = setInterval(GetMeasurement, 1000);
             }
           }
@@ -362,12 +360,7 @@ window.chartColors = {
               document.getElementById("configurationPopup").style.display = "inline";
             });
 
-            document.getElementById("TemperatureSP").addEventListener("input", function () {
-                dontOverwriteTempSp = true;
-                setTimeout(function() {dontOverwriteTempSp = false;}, 4000); //Clear the flag after 4 seconds
-            });
-
-            var gauge = new RadialGauge({
+            window.gauge = new RadialGauge({
                 renderTo: 'tempGauge',
                 width: 300,
                 height: 300,
@@ -403,7 +396,7 @@ window.chartColors = {
                 needleCircleSize: 7,
                 needleCircleOuter: true,
                 needleCircleInner: false,
-                animationDuration: 1500,
+                animationDuration: 500,
                 animationRule: "linear"
             }).draw();
             GetBrewages()
