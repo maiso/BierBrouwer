@@ -30,6 +30,44 @@
           </div> 
         </div>
       </div>
+      <!--
+###############################################################################################################################
+Brewage Select Popup
+###############################################################################################################################
+      -->
+      <div id="selectBrewagePopup">
+        <div class="flex-container">
+          <div>
+            <p>Open existing Brewage:</p>
+            <select id="BrewageList">
+            <input id="pbOpenBrewage" type="button" value="Open Brewage" onclick="OpenBrewage();" disabled />
+            <hr></hr>
+            <p>Create new brewage.</p>
+            <table id="newBrewageTable">
+              <tr> 
+                <td>Brew Name</td>      
+                <td><input type="text" id="newBrew_Name"></td>
+              </tr>       
+              <tr> 
+                <td>Configuration</td>  
+                <td><select id="newBrew_ConfigSelect"></td>
+                <td><input id="pbNewConfig" type="button" value="New Config" onclick="ShowConfigurationPopup();" /></td>
+              </tr>
+              <!-- <tr> 
+                <td>Mashing Schema</td> 
+                <td><select id="newBrew_ConfigSelect"></td>
+                <td><input id="pbNewMash" type="button" value="New Mashing" onclick="NewMashing();" /></td>
+              </tr> -->
+            </table>
+            <input id="pbNewBrewage" type="button" value="New Brewage" onclick="NewBrewage();" />
+          </div>  
+        </div>
+      </div>
+      <!--
+###############################################################################################################################
+Configuration Popup
+###############################################################################################################################
+      -->
       <div id="configurationPopup" class="popClass">
         <div class="flex-container">
           <div class="configurationLayout">
@@ -54,45 +92,34 @@
             <div>
               <input id="pbApplyConfiguration"  type="button" value="Apply"  onclick="SetConfiguration();" />
               <input id="pbSaveConfiguration"   type="button" value="Save"   onclick="SaveConfiguration();" />
-              <input id="pbReloadConfiguration" type="button" value="Reload" onclick="ReloadConfiguration();" />
               <input id="pbCloseConfiguration"  type="button" value="Close"  onclick="CloseConfiguration();" />
             </div>
           </div>
         </div>
       </div>
 
-      <div id="selectBrewagePopup">
-        <div class="flex-container">
-          <div>
-            <p>Select Brewage:</p>
-            <select id="BrewageList">
-            <input id="pbOpenBrewage"       type="button" value="Open Brewage" onclick="OpenBrewage();" disabled />
-          </div>  
-        </div>
-      </div>
-
-    <div id="wrapper">
-      <div class="header">
-        <div><h1 id="headerText"><strong>Brew: </strong></h1></div>
-        <input id="pbShowConfiguration" type="image" src="images/settings_48px_352095.svg" disabled/>  
-      </div>  
-      <div id="userInputSection">   
-        <div id="startStopHolder" class="controlHolder">
-          <input id="pbStartPID" class="btn" type="image" src="images/play_arrow_48px_352072.svg" onclick="StartRegelaar();" disabled/>
-          <input id="pbStopPID"  class="btn" type="image" src="images/stop_48px_352144.svg" onclick="StopRegelaar();" disabled/>
-        </div>
-        
-        <div id="gaugeHolder" class="controlHolder">
-          <canvas id="tempGauge" onclick="StartGetMeasurements();"></canvas> 
+      <div id="wrapper">
+        <div class="header">
+          <div><h1 id="headerText"><strong>Brew: </strong></h1></div>
+          <input id="pbShowConfiguration" type="image" src="images/settings_48px_352095.svg" onclick="pbShowConfiguration();" disabled/>  
         </div>  
+        <div id="userInputSection">   
+          <div id="startStopHolder" class="controlHolder">
+            <input id="pbStartPID" class="btn" type="image" src="images/play_arrow_48px_352072.svg" onclick="StartRegelaar();" disabled/>
+            <input id="pbStopPID"  class="btn" type="image" src="images/stop_48px_352144.svg" onclick="StopRegelaar();" disabled/>
+          </div>
+          
+          <div id="gaugeHolder" class="controlHolder">
+            <canvas id="tempGauge" onclick="StartGetMeasurements();"></canvas> 
+          </div>  
 
-        <div id="tempControl" class="controlHolder">
-          <input id="tempUp"   class="btn" type="image" src="images/arrow_up_48px_352469.svg" onclick="SetpointInc();" disabled ></img>
-          <h1  id="TemperatureSP" style="font-size:1vw">0.0°C</h1> 
-          <input id="tempDown" class="btn"type="image" src="images/arrow_down_48px_352466.svg" onclick="SetpointDec();" disabled></img>
-        </div>
-      </div> 
-      <div id="henkie"> <canvas id="myChart"></canvas></div>
+          <div id="tempControl" class="controlHolder">
+            <input id="tempUp"   class="btn" type="image" src="images/arrow_up_48px_352469.svg" onclick="SetpointInc();" disabled ></img>
+            <h1  id="TemperatureSP" style="font-size:1vw">0.0°C</h1> 
+            <input id="tempDown" class="btn"type="image" src="images/arrow_down_48px_352466.svg" onclick="SetpointDec();" disabled></img>
+          </div>
+        </div> 
+        <div id="henkie"> <canvas id="myChart"></canvas></div>
       </div> 
    </body>
 </html>

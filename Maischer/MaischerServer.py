@@ -109,8 +109,9 @@ class MaischerServer():
 
         commandHandlers = {
             'GetActiveBrew'    : self.handleGetActiveBrew,
-            'GetBrewages'      : self.handleGetBrewages,
+            'GetAvailableSettings' : self.handleGetAvailableSettings,
             'OpenBrewage'      : self.handleOpenBrewage,
+            'GetConfigurations': self.handleGetConfigurations,
             'SetConfiguration' : self.handleSetConfiguration,
             'GetMeasurement'   : self.handleGetMeasurement,
             'StartStop'        : self.handleStartStop,
@@ -141,13 +142,21 @@ class MaischerServer():
 
         return jsonDict
 
-    def handleGetBrewages(self, parsed_json):
+    def handleGetAvailableSettings(self, parsed_json):
         brewages = self.db.getAllBrewages()
         jsonDict = self.commandOkJson(parsed_json['Command'])
         brewagesList = []
         for row in brewages:
             brewagesList.append(row["BrewName"])
         jsonDict["Brewages"] = brewagesList
+
+        #Get all configruations
+        configurations = self.db.getAllConfigurations()
+        configurationList = []
+        for row in configurations:
+            configurationList.append(row["ConfigurationName"])
+        jsonDict["Configurations"] = configurationList
+
         return jsonDict
 
     def handleOpenBrewage(self, parsed_json):
@@ -183,6 +192,15 @@ class MaischerServer():
                         "OutputPV"                : str(self.outputPV)
                    }
         jsonDict = {**jsonDict, **measurement}
+        return jsonDict
+
+    def handleGetConfigurations(self,parsed_json):
+        configurations = self.db.getAllConfigurations()
+        jsonDict = self.commandOkJson(parsed_json['Command'])
+        configurationList = []
+        for row in configurations:
+            configurationList.append(row["ConfigurationName"])
+        jsonDict["Configurations"] = configurationList
         return jsonDict
 
     def handleSetConfiguration(self, parsed_json):

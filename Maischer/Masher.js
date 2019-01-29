@@ -122,10 +122,20 @@ window.chartColors = {
           return obj
         }
 
+        function addItemToSelectList(selectList, text){
+          var option = document.createElement("option");
+          option.setAttribute("value", text);
+          option.text = text;
+          selectList.appendChild(option);
+        }
+
+/**************************************************************************************/
+/*      Brewage Selection      */
+
         function GetActiveBrew(){
             var handleGetActiveBrewAnswer = function (jsonobj) {
               if(jsonobj.ActiveBrew == false){
-                  GetBrewages()
+                  GetAvailableSettings();
                   document.getElementById("selectBrewagePopup").style.display = "inline";
                   userControl(false);
 
@@ -136,11 +146,9 @@ window.chartColors = {
                   insertDataInChart(measurment.MeasurementTime,measurment.Temperature,measurment.SetPoint,measurment.PIDOutput)
                 }
                 window.myLine.update();
-                var selectList = document.getElementById("BrewageList");
-                var option = document.createElement("option");
-                option.setAttribute("value", jsonobj.Brewage);
-                option.text = jsonobj.Brewage;
-                selectList.appendChild(option);
+
+                addItemToSelectList(document.getElementById("BrewageList"),jsonobj.Brewage);
+
                 OpenBrewage()
                 userControl(true);
               }
@@ -153,21 +161,27 @@ window.chartColors = {
 
         }
 
-        function GetBrewages(){
-          var handleGetBrewagesAnswer = function (jsonobj) {
+        function GetAvailableSettings(){
+          var handleGetAvailableSettingsAnswer = function (jsonobj) {
+            console.log(jsonobj);
             var selectList = document.getElementById("BrewageList");
              //Create and append the options
              for (var i = 0; i < jsonobj.Brewages.length; i++) {
-                 var option = document.createElement("option");
-                 option.setAttribute("value", jsonobj.Brewages[i]);
-                 option.text = jsonobj.Brewages[i];
-                 selectList.appendChild(option);
+                addItemToSelectList(document.getElementById("BrewageList"),jsonobj.Brewages[i]);
              }
+
+             var selectList = document.getElementById("newBrew_ConfigSelect");
+             //Create and append the options
+             for (var i = 0; i < jsonobj.Configurations.length; i++) {
+                addItemToSelectList(document.getElementById("newBrew_ConfigSelect"),jsonobj.Configurations[i]);
+             }
+
+              // TODO add mashing schemas
              document.getElementById("pbOpenBrewage").disabled = false;
           }
 
-          cmd = CreateJsonCommand("GetBrewages")
-          WebSocketClient(cmd,handleGetBrewagesAnswer)
+          cmd = CreateJsonCommand("GetAvailableSettings")
+          WebSocketClient(cmd,handleGetAvailableSettingsAnswer)
         }
 
         function OpenBrewage(){
@@ -194,6 +208,13 @@ window.chartColors = {
           cmd.Brewage = selectedDatabase
           WebSocketClient(cmd,handleOpenBrewageAnswer)
         }
+
+        function NewBrewage(){
+
+        }
+
+/**************************************************************************************/
+/*      Other stuff       */
 
         var intervalID = null
         function StartGetMeasurements(){
@@ -353,6 +374,27 @@ window.chartColors = {
 /**************************************************************************************/
 /*      Configuration       */
 
+        function GetConfigurations(){
+          var handleGetConfigurationsAnswer = function (jsonobj) {
+            var selectList = document.getElementById("newBrew_ConfigSelect");
+             //Create and append the options
+             for (var i = 0; i < jsonobj.Configurations.length; i++) {
+                 var option = document.createElement("option");
+                 option.setAttribute("value", jsonobj.Configurations[i]);
+                 option.text = jsonobj.Configurations[i];
+                 selectList.appendChild(option);
+             }
+          }
+
+          cmd = CreateJsonCommand("GetConfigurations")
+          WebSocketClient(cmd,handleGetConfigurationsAnswer)
+        }
+
+        function NewConfiguration(){
+          // document.getElementById("configurationPopup").style.display = "inline";
+          ShowConfigurationPopup();
+        }
+
         function SetConfiguration(){
           var handleSetOutputAnswer = function (jsonobj) {
             openedConfiguration = jsonobj
@@ -371,6 +413,10 @@ window.chartColors = {
           WebSocketClient(cmd, handleSetOutputAnswer)
         }
 
+        function ShowConfigurationPopup(){
+            ReloadConfiguration()
+            document.getElementById("configurationPopup").style.display = "inline";
+        }
         function SaveConfiguration(){
           SetConfiguration();
           CloseConfiguration();
@@ -391,19 +437,11 @@ window.chartColors = {
             document.getElementById("Configuration_StepsPerRevolution").value = openedConfiguration.StepsPerRevolution;
           }
         }
-
-
+/**************************************************************************************/
+/*      window on load       */
         window.onload = function() {
-            //alert("Reload")
-
             var ctx = document.getElementById("myChart").getContext('2d');
-            // ctx.height = 500;
             window.myLine = new Chart(ctx, ChartConfig);   
-
-            // Show the share pop up window when the share icon is clicked
-            document.getElementById("pbShowConfiguration").addEventListener("click", function(){
-              document.getElementById("configurationPopup").style.display = "inline";
-            });
 
             window.gauge = new RadialGauge({
                 renderTo: 'tempGauge',

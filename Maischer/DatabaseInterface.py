@@ -87,6 +87,11 @@ class DatabaseInterface():
         self.c.execute('''SELECT * FROM Configuration WHERE ConfigurationId = ?''',(ConfigurationId,))
         return self.c.fetchone()
 
+    def getAllConfigurations(self):
+        self.c.execute('''SELECT * FROM Configuration''')
+        self.rows = self.c.fetchall()
+        return [dict(row) for row in self.rows]
+
 #########################################################################
 ### Mashing
 #########################################################################
