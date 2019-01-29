@@ -78,6 +78,9 @@ class MaischerServer():
 
         while(self.runGetTempThread):
             #self.Temperature = self.ReadDS18B20("28-000008717fea")
+            self.Temperature = self.Temperature +1
+            if self.Temperature > self.TemperatureSetPoint:
+                self.Temperature = 0
             if self.regelaarActive == True:
                 self.pid.setKp (self.P)
                 self.pid.setKi (self.I)
@@ -174,9 +177,6 @@ class MaischerServer():
 
     def handleGetMeasurement(self, parsed_json):
         jsonDict = self.commandOkJson(parsed_json['Command'])
-        self.Temperature = self.Temperature +1
-        if self.Temperature > self.TemperatureSetPoint:
-            self.Temperature = 0
         measurement = { "ActiveBrewing"           : self.regelaarActive,
                         "TemperatureSetPoint"     : str(self.TemperatureSetPoint),
                         "TemperatureProcessValue" : str(self.Temperature),

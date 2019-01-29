@@ -126,20 +126,26 @@ window.chartColors = {
             var handleGetActiveBrewAnswer = function (jsonobj) {
               if(jsonobj.ActiveBrew == false){
                   GetBrewages()
+                  document.getElementById("selectBrewagePopup").style.display = "inline";
+                  userControl(false);
+
               } 
               else {
                 for (var i = 0; i < jsonobj.Measurments.length; i++) {
                   var measurment = jsonobj.Measurments[i]
                   insertDataInChart(measurment.MeasurementTime,measurment.SetPoint,measurment.Temperature,measurment.PIDOutput)
                 }
+                window.myLine.update();
                 var selectList = document.getElementById("BrewageList");
                 var option = document.createElement("option");
                 option.setAttribute("value", jsonobj.Brewage);
                 option.text = jsonobj.Brewage;
                 selectList.appendChild(option);
                 OpenBrewage()
+                userControl(true);
               }
               document.getElementById("pbOpenBrewage").disabled = false;
+              document.getElementById("loadingActiveBrewPopup").style.display = "none";
           }
 
           cmd = CreateJsonCommand("GetActiveBrew")
@@ -175,12 +181,10 @@ window.chartColors = {
             document.getElementById("BrewageList").disabled = true;
             document.getElementById("pbOpenBrewage").disabled = true;
             document.getElementById("pbShowConfiguration").disabled = false;
-            document.getElementById("pbStartPID").disabled = false;
             document.getElementById("selectBrewagePopup").style.display = "none";
 
             document.getElementById("headerText").innerHTML = document.getElementById("BrewageList").value;
 
-            userControl(true);
             StartGetMeasurements();
           }
           var selectList = document.getElementById("BrewageList");
@@ -206,7 +210,6 @@ window.chartColors = {
               ChartConfig.data.datasets[0].data.push({ x: date, y: tempPv });
               ChartConfig.data.datasets[1].data.push({ x: date, y: tempSp});
               ChartConfig.data.datasets[2].data.push({ x: date, y: Output });
-              window.myLine.update();
         }
 
         function GetMeasurement(){
@@ -217,6 +220,7 @@ window.chartColors = {
 
             if (jsonobj.ActiveBrewing == true){
                 insertDataInChart(new Date(Date.now()), jsonobj.TemperatureProcessValue,jsonobj.TemperatureSetPoint,jsonobj.OutputPV);
+                window.myLine.update();
               }
           }
 
@@ -225,25 +229,33 @@ window.chartColors = {
         }
 
         function SetpointInc(){
+          console.log("SetpointInc"); 
+
           var setPoint = document.getElementById("TemperatureSP").innerHTML;
           setPoint = setPoint.substring(0, setPoint.length - 3); 
-          SetTemperature(parseFloat(setPoint) + 1);
+          setPointFloat = parseFloat(setPoint) + 1
+          if(!isNaN(setPointFloat))
+            SetTemperature(setPointFloat);
         }
         function SetpointDec(){
+          console.log("SetpointDecc"); 
+
           var setPoint = document.getElementById("TemperatureSP").innerHTML;
           setPoint = setPoint.substring(0, setPoint.length - 3); 
-          SetTemperature(parseFloat(setPoint) - 1);
+          setPointFloat = parseFloat(setPoint) - 1
+          if(!isNaN(setPointFloat))
+            SetTemperature(setPointFloat);        
         }
 
         function SetTemperature(setPoint){
-                    
-
           var handleSetTemperatureAnswer = function (jsonobj) {
-            document.getElementById("TemperatureSP").value = jsonobj.SetPoint
+            document.getElementById("TemperatureSP").innerHTML = jsonobj.SetPoint + ' °C'
           }
 
           cmd = CreateJsonCommand("SetTemperature")
           cmd.SetPoint = setPoint
+          console.log("SetTemperature"); 
+
           WebSocketClient(cmd,handleSetTemperatureAnswer)
         }
 
