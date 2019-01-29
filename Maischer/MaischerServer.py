@@ -210,8 +210,10 @@ class MaischerServer():
         ConfigI         = parsed_json['Configuration']['I']
         ConfigD         = parsed_json['Configuration']['D']
         ConfigStepsPerRevolution = parsed_json['Configuration']['StepsPerRevolution']
-
-        self.db.updateConfiguration(ConfigId,ConfigName,ConfigP,ConfigI,ConfigD,ConfigStepsPerRevolution)
+        if ConfigId == "":
+            ConfigId = self.db.insertConfiguration(ConfigName,ConfigP,ConfigI,ConfigD,ConfigStepsPerRevolution)    
+        else:
+            self.db.updateConfiguration(ConfigId,ConfigName,ConfigP,ConfigI,ConfigD,ConfigStepsPerRevolution)
         self.P = float(ConfigP)
         self.I = float(ConfigI)
         self.D = float(ConfigD)

@@ -41,7 +41,7 @@ class DatabaseInterface():
         self.c.execute('''
             CREATE TABLE IF NOT EXISTS Configuration(
                ConfigurationId    INTEGER PRIMARY KEY AUTOINCREMENT,
-               ConfigurationName  TEXT  NOT NULL,               
+               ConfigurationName  TEXT  NOT NULL UNIQUE,               
                P  REAL  ,
                I  REAL  ,
                D  REAL  ,
@@ -65,6 +65,8 @@ class DatabaseInterface():
                   D  ,
                   StepsPerRevolution ))
         self.conn.commit()  
+        self.c.execute('''SELECT ConfigurationId FROM Configuration WHERE ConfigurationName = ?''',(ConfigurationName,))
+        return self.c.fetchone()['ConfigurationId']
 
     def updateConfiguration(self, ConfigurationId,ConfigurationName,P,I,D,StepsPerRevolution):
         self.c.execute(
