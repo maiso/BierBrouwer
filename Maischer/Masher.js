@@ -133,7 +133,7 @@ window.chartColors = {
               else {
                 for (var i = 0; i < jsonobj.Measurments.length; i++) {
                   var measurment = jsonobj.Measurments[i]
-                  insertDataInChart(measurment.MeasurementTime,measurment.SetPoint,measurment.Temperature,measurment.PIDOutput)
+                  insertDataInChart(measurment.MeasurementTime,measurment.Temperature,measurment.SetPoint,measurment.PIDOutput)
                 }
                 window.myLine.update();
                 var selectList = document.getElementById("BrewageList");

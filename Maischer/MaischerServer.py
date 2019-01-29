@@ -39,7 +39,6 @@ class MaischerServer():
         self.regelaarActive = False
 
         self.pid = PID.PID(self.P, self.I, self.D)
-        self.pid.SetPoint = self.TemperatureSetPoint
         self.pid.setSampleTime(1)
 
         self.motor = StepperMotor()
@@ -155,7 +154,8 @@ class MaischerServer():
         brewages = self.db.getBrewage(parsed_json['Brewage'])
         self.brewageId = brewages['BrewageId']
         self.brewName = brewages['BrewName']
-        self.TemperatureSetPoint = brewages['Mashing']['SetPoints'][0]['SetPoint']
+        if self.regelaarActive == False:
+            self.TemperatureSetPoint = brewages['Mashing']['SetPoints'][0]['SetPoint']
         self.motor.setMotorConfig(brewages['Configuration']['StepsPerRevolution'])
         jsonDict = self.commandOkJson(parsed_json['Command'])
         jsonDict = {**jsonDict, **brewages}
