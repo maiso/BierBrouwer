@@ -106,7 +106,10 @@ containing a popup stand out */
 	/*//    border: 3px solid purple; */
 
 }
-
+input[type=image]:disabled
+{
+    opacity:0.25;
+}
 #startStopHolder{
 	width:400px;
 	height:100px;

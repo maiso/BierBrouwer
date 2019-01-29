@@ -77,7 +77,7 @@ class MaischerServer():
         dbInterface = DatabaseInterface(databaseName)
 
         while(self.runGetTempThread):
-            self.Temperature = self.ReadDS18B20("28-000008717fea")
+            #self.Temperature = self.ReadDS18B20("28-000008717fea")
             if self.regelaarActive == True:
                 self.pid.setKp (self.P)
                 self.pid.setKi (self.I)
@@ -106,6 +106,7 @@ class MaischerServer():
         parsed_json = json.loads(json_string)
 
         commandHandlers = {
+            'GetActiveBrew'    : self.handleGetActiveBrew,
             'GetBrewages'      : self.handleGetBrewages,
             'OpenBrewage'      : self.handleOpenBrewage,
             'SetConfiguration' : self.handleSetConfiguration,
@@ -129,6 +130,15 @@ class MaischerServer():
                      "Result"  : 'Ok'}
         return jsonDict
     
+    def handleGetActiveBrew(self,parsed_json):
+        jsonDict = self.commandOkJson(parsed_json['Command'])
+        jsonDict['ActiveBrew'] = self.regelaarActive
+        if self.regelaarActive:
+            jsonDict['Brewage'] = self.brewName
+            jsonDict['Measurments'] = self.db.getMeasurements(self.brewageId)
+
+        return jsonDict
+
     def handleGetBrewages(self, parsed_json):
         brewages = self.db.getAllBrewages()
         jsonDict = self.commandOkJson(parsed_json['Command'])
@@ -141,6 +151,7 @@ class MaischerServer():
     def handleOpenBrewage(self, parsed_json):
         brewages = self.db.getBrewage(parsed_json['Brewage'])
         self.brewageId = brewages['BrewageId']
+        self.brewName = brewages['BrewName']
         self.TemperatureSetPoint = brewages['Mashing']['SetPoints'][0]['SetPoint']
         self.motor.setMotorConfig(brewages['Configuration']['StepsPerRevolution'])
         jsonDict = self.commandOkJson(parsed_json['Command'])
@@ -163,7 +174,11 @@ class MaischerServer():
 
     def handleGetMeasurement(self, parsed_json):
         jsonDict = self.commandOkJson(parsed_json['Command'])
-        measurement = { "TemperatureSetPoint"     : str(self.TemperatureSetPoint),
+        self.Temperature = self.Temperature +1
+        if self.Temperature > self.TemperatureSetPoint:
+            self.Temperature = 0
+        measurement = { "ActiveBrewing"           : self.regelaarActive,
+                        "TemperatureSetPoint"     : str(self.TemperatureSetPoint),
                         "TemperatureProcessValue" : str(self.Temperature),
                         "OutputPV"                : str(self.outputPV)
                    }

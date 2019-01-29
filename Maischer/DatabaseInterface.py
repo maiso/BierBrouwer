@@ -323,6 +323,14 @@ class DatabaseInterface():
           ''', (BrewageId, str(datetime.datetime.now()), float(SetPoint), float(Temperature),float(PIDOutput)))
         self.conn.commit()
 
+    def getMeasurements(self, BrewageId):
+        self.c.execute('''SELECT *
+          FROM Measurements 
+          WHERE Measurements.BrewageId = ?
+          ''',(BrewageId,))
+
+        measurements = self.c.fetchall()
+        return  [dict(row) for row in measurements]
 
 
 # if __Name__ == "__main__":

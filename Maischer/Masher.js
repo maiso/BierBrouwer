@@ -122,6 +122,31 @@ window.chartColors = {
           return obj
         }
 
+        function GetActiveBrew(){
+            var handleGetActiveBrewAnswer = function (jsonobj) {
+              if(jsonobj.ActiveBrew == false){
+                  GetBrewages()
+              } 
+              else {
+                for (var i = 0; i < jsonobj.Measurments.length; i++) {
+                  var measurment = jsonobj.Measurments[i]
+                  insertDataInChart(measurment.MeasurementTime,measurment.SetPoint,measurment.Temperature,measurment.PIDOutput)
+                }
+                var selectList = document.getElementById("BrewageList");
+                var option = document.createElement("option");
+                option.setAttribute("value", jsonobj.Brewage);
+                option.text = jsonobj.Brewage;
+                selectList.appendChild(option);
+                OpenBrewage()
+              }
+              document.getElementById("pbOpenBrewage").disabled = false;
+          }
+
+          cmd = CreateJsonCommand("GetActiveBrew")
+          WebSocketClient(cmd,handleGetActiveBrewAnswer)
+
+        }
+
         function GetBrewages(){
           var handleGetBrewagesAnswer = function (jsonobj) {
             var selectList = document.getElementById("BrewageList");
@@ -155,7 +180,8 @@ window.chartColors = {
 
             document.getElementById("headerText").innerHTML = document.getElementById("BrewageList").value;
 
-
+            userControl(true);
+            StartGetMeasurements();
           }
           var selectList = document.getElementById("BrewageList");
           var selectedDatabase = selectList.options[selectList.selectedIndex].text;
@@ -166,12 +192,21 @@ window.chartColors = {
         }
 
         var intervalID = null
-        function StartGetMeasurements(cb){
-          if (cb.checked){
-             intervalID = setInterval(GetMeasurement, 1000);
-          }else{
-            clearInterval(intervalID)
+        function StartGetMeasurements(){
+          if (intervalID == null){
+            GetMeasurement();
+            intervalID = setInterval(GetMeasurement, 1000);
           }
+          // else{
+          //   clearInterval(intervalID)
+          // }
+        }
+
+        function insertDataInChart(date,tempPv,tempSp,Output) {
+              ChartConfig.data.datasets[0].data.push({ x: date, y: tempPv });
+              ChartConfig.data.datasets[1].data.push({ x: date, y: tempSp});
+              ChartConfig.data.datasets[2].data.push({ x: date, y: Output });
+              window.myLine.update();
         }
 
         function GetMeasurement(){
@@ -179,26 +214,29 @@ window.chartColors = {
             document.getElementById("TemperatureSP").innerHTML = jsonobj.TemperatureSetPoint + ' °C'
             window.gauge.value = jsonobj.TemperatureProcessValue;
             window.gauge.update();
-            ChartConfig.data.datasets[0].data.push({
-                        x: new Date(Date.now()),
-                        y: jsonobj.TemperatureProcessValue })
 
-            ChartConfig.data.datasets[1].data.push({
-                        x: new Date(Date.now()),
-                        y: jsonobj.TemperatureSetPoint })
-
-            ChartConfig.data.datasets[2].data.push({
-                                              x: new Date(Date.now()),
-                                              y: jsonobj.OutputPV })
-            window.myLine.update();
+            if (jsonobj.ActiveBrewing == true){
+                insertDataInChart(new Date(Date.now()), jsonobj.TemperatureProcessValue,jsonobj.TemperatureSetPoint,jsonobj.OutputPV);
+              }
           }
 
           cmd = CreateJsonCommand("GetMeasurement")
           WebSocketClient(cmd,handleGetMeasurementAnswer)
         }
 
-        function SetTemperature(){
-          var setPoint = document.getElementById("TemperatureSP").value;          
+        function SetpointInc(){
+          var setPoint = document.getElementById("TemperatureSP").innerHTML;
+          setPoint = setPoint.substring(0, setPoint.length - 3); 
+          SetTemperature(parseFloat(setPoint) + 1);
+        }
+        function SetpointDec(){
+          var setPoint = document.getElementById("TemperatureSP").innerHTML;
+          setPoint = setPoint.substring(0, setPoint.length - 3); 
+          SetTemperature(parseFloat(setPoint) - 1);
+        }
+
+        function SetTemperature(setPoint){
+                    
 
           var handleSetTemperatureAnswer = function (jsonobj) {
             document.getElementById("TemperatureSP").value = jsonobj.SetPoint
@@ -241,24 +279,23 @@ window.chartColors = {
           WebSocketClient(cmd,handleZeroMotorAngleAnswer)
         }
 
-        /*
-        function SetOutput(){
-          var setPoint = document.getElementById("OutputSP").value;          
-          var handleSetOutputAnswer = function (jsonobj) {
-            document.getElementById("OutputSP").value = jsonobj.Output;
-          }
-          WebSocketClient("SetOutput " + setPoint,handleSetOutputAnswer)
-        }*/
-
-
-        function StartRegelaar(){
-          var handleStartRegelaarAnswer = function (jsonobj) {
+        function userControl(activeMeasurment){
+          if (activeMeasurment){
             document.getElementById("pbStopPID").disabled = false;
             document.getElementById("pbStartPID").disabled = true;
-            if(intervalID == null){
-              GetMeasurement();
-              intervalID = setInterval(GetMeasurement, 1000);
-            }
+            document.getElementById("tempUp").disabled = false;
+            document.getElementById("tempDown").disabled = false;
+          }else{
+            document.getElementById("pbStopPID").disabled = true;
+            document.getElementById("pbStartPID").disabled = false;
+            document.getElementById("tempUp").disabled = true;
+            document.getElementById("tempDown").disabled = true;
+          }
+        }
+        function StartRegelaar(){
+          var handleStartRegelaarAnswer = function (jsonobj) {
+            userControl(true);
+            StartGetMeasurements();
           }
           cmd = CreateJsonCommand("StartStop")
           cmd.Start = true
@@ -267,12 +304,7 @@ window.chartColors = {
 
         function StopRegelaar(){
           var handleStopRegelaarAnswer = function (jsonobj) {
-            document.getElementById("pbStopPID").disabled = true;
-            document.getElementById("pbStartPID").disabled = false;
-
-            if(intervalID != null){
-              clearInterval(intervalID)
-            }
+            userControl(false);
           }
           cmd = CreateJsonCommand("StartStop")
           cmd.Start = false
@@ -348,6 +380,7 @@ window.chartColors = {
           }
         }
 
+
         window.onload = function() {
             //alert("Reload")
 
@@ -399,7 +432,8 @@ window.chartColors = {
                 animationDuration: 500,
                 animationRule: "linear"
             }).draw();
-            GetBrewages()
+
+            GetActiveBrew()
 
             // var intervalID = setInterval(GetTemperature, 1000);
             // var intervalID = setInterval(GetServoAngle, 1000);

@@ -62,13 +62,13 @@
         </div>
         
         <div id="gaugeHolder" class="controlHolder">
-          <canvas id="tempGauge"></canvas> 
+          <canvas id="tempGauge" onclick="StartGetMeasurements();"></canvas> 
         </div>  
 
         <div id="tempControl" class="controlHolder">
-          <input id="tempUp"   class="btn" type="image" src="images/arrow_up_48px_352469.svg" onclick="IncSetpoint();" disabled ></img>
+          <input id="tempUp"   class="btn" type="image" src="images/arrow_up_48px_352469.svg" onclick="SetpointInc();" disabled ></img>
           <h1  id="TemperatureSP" style="font-size:1vw">0.0°C</h1> 
-          <input id="tempDown" class="btn"type="image" src="images/arrow_down_48px_352466.svg" onclick="DecSetpoint();" disabled></img>
+          <input id="tempDown" class="btn"type="image" src="images/arrow_down_48px_352466.svg" onclick="SetpointDec();" disabled></img>
         </div>
       </div> 
       <div id="henkie"> <canvas id="myChart"></canvas></div>
