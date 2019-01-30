@@ -25,9 +25,9 @@ class MaischerServer():
         self.brewageId = None
         self.db = DatabaseInterface(databaseName)
 
-        self.db.createDefaultConfiguration()
-        self.db.createDefaultMashing()
-        self.db.createDefaultBrewage()
+        # self.db.createDefaultConfiguration()
+        # self.db.createDefaultMashing()
+        # self.db.createDefaultBrewage()
 
 
         self.P = 10
@@ -111,7 +111,8 @@ class MaischerServer():
             'GetActiveBrew'    : self.handleGetActiveBrew,
             'GetAvailableSettings' : self.handleGetAvailableSettings,
             'OpenBrewage'      : self.handleOpenBrewage,
-            'GetConfigurations': self.handleGetConfigurations,
+            'NewBrewage'       : self.handleNewBrewage,
+            'GetConfiguration' : self.handleGetConfiguration,
             'SetConfiguration' : self.handleSetConfiguration,
             'GetMeasurement'   : self.handleGetMeasurement,
             'StartStop'        : self.handleStartStop,
@@ -119,7 +120,7 @@ class MaischerServer():
             'SetMotorAngle'    : self.handleSetMotorAngle,
             'GetMotorAngle'    : self.handleGetMotorAngle,
             'ZeroMotorAngle'   : self.handleZeroMotorAngle,
-            'MaxMotorAngle'   : self.handleMaxMotorAngle,
+            'MaxMotorAngle'    : self.handleMaxMotorAngle,
         }
         #try:
         result_json = commandHandlers[parsed_json['Command']](parsed_json)
@@ -159,12 +160,20 @@ class MaischerServer():
 
         return jsonDict
 
+    def handleNewBrewage(self,parsed_json):
+        newBrewage = parsed_json['Brewage']
+        configId = self.db.getConfigurationIdByName(newBrewage['ConfigurationName'])
+        self.db.insertBrewage(newBrewage['BrewName'],str(datetime.datetime.now()),None,None,None,None,configId,None)
+        jsonDict = self.commandOkJson(parsed_json['Command'])
+        jsonDict['BrewName'] = newBrewage['BrewName']
+        return jsonDict
+
     def handleOpenBrewage(self, parsed_json):
         brewages = self.db.getBrewage(parsed_json['Brewage'])
         self.brewageId = brewages['BrewageId']
         self.brewName = brewages['BrewName']
-        if self.regelaarActive == False:
-            self.TemperatureSetPoint = brewages['Mashing']['SetPoints'][0]['SetPoint']
+        #if self.regelaarActive == False:
+        #    self.TemperatureSetPoint = brewages['Mashing']['SetPoints'][0]['SetPoint']
         self.motor.setMotorConfig(brewages['Configuration']['StepsPerRevolution'])
         jsonDict = self.commandOkJson(parsed_json['Command'])
         jsonDict = {**jsonDict, **brewages}
@@ -194,13 +203,10 @@ class MaischerServer():
         jsonDict = {**jsonDict, **measurement}
         return jsonDict
 
-    def handleGetConfigurations(self,parsed_json):
-        configurations = self.db.getAllConfigurations()
+    def handleGetConfiguration(self,parsed_json):
         jsonDict = self.commandOkJson(parsed_json['Command'])
-        configurationList = []
-        for row in configurations:
-            configurationList.append(row["ConfigurationName"])
-        jsonDict["Configurations"] = configurationList
+        newConfig = self.db.getConfigurationByName(parsed_json['ConfigurationName'])
+        jsonDict = {**jsonDict, **newConfig}
         return jsonDict
 
     def handleSetConfiguration(self, parsed_json):

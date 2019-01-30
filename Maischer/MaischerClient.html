@@ -45,14 +45,14 @@ Brewage Select Popup
             <p>Create new brewage.</p>
             <table id="newBrewageTable">
               <tr> 
-                <td>Brew Name</td>      
+                <td>Brew Name</td>
                 <td><input type="text" id="newBrew_Name"></td>
-              </tr>       
-              <tr> 
+              </tr>
+              <tr>
                 <td>Configuration</td>  
                 <td><select id="newBrew_ConfigSelect"></td>
-                <td><input id="pbOpenConfig" type="button" value="Open" onclick="ShowConfigurationPopup();" /></td>
-                <td><input id="pbNewConfig" type="button" value="New" onclick="ShowConfigurationPopup();" /></td>
+                <td><input id="pbOpenConfig" type="button" value="Open" onclick="OpenExistingConfiguration();" /></td>
+                <td><input id="pbNewConfig" type="button" value="New" onclick="NewConfiguration();" /></td>
               </tr>
               <!-- <tr> 
                 <td>Mashing Schema</td> 
@@ -102,7 +102,7 @@ Configuration Popup
       <div id="wrapper">
         <div class="header">
           <div><h1 id="headerText"><strong>Brew: </strong></h1></div>
-          <input id="pbShowConfiguration" type="image" src="images/settings_48px_352095.svg" onclick="pbShowConfiguration();" disabled/>  
+          <input id="pbShowConfiguration" type="image" src="images/settings_48px_352095.svg" onclick="ShowConfigurationPopup();" disabled/>  
         </div>  
         <div id="userInputSection">   
           <div id="startStopHolder" class="controlHolder">

@@ -210,7 +210,15 @@ window.chartColors = {
         }
 
         function NewBrewage(){
-
+          var handleNewBrewageAnswer = function (jsonobj) {
+            addItemToSelectList(document.getElementById("BrewageList"),jsonobj['BrewName'])
+            OpenBrewage()
+          }
+          cmd = CreateJsonCommand("NewBrewage")
+          cmd.Brewage = new Object();
+          cmd.Brewage.BrewName          = document.getElementById("newBrew_Name").value;
+          cmd.Brewage.ConfigurationName = document.getElementById("newBrew_ConfigSelect").value;
+          WebSocketClient(cmd, handleNewBrewageAnswer)          
         }
 
 /**************************************************************************************/
@@ -374,25 +382,15 @@ window.chartColors = {
 /**************************************************************************************/
 /*      Configuration       */
 
-        function GetConfigurations(){
-          var handleGetConfigurationsAnswer = function (jsonobj) {
-            var selectList = document.getElementById("newBrew_ConfigSelect");
-             //Create and append the options
-             for (var i = 0; i < jsonobj.Configurations.length; i++) {
-                 var option = document.createElement("option");
-                 option.setAttribute("value", jsonobj.Configurations[i]);
-                 option.text = jsonobj.Configurations[i];
-                 selectList.appendChild(option);
-             }
+        function GetConfiguration(){
+          var handleGetConfigurationAnswer = function (jsonobj) {
+            openedConfiguration = jsonobj
+            ReloadConfiguration()
           }
 
-          cmd = CreateJsonCommand("GetConfigurations")
-          WebSocketClient(cmd,handleGetConfigurationsAnswer)
-        }
-
-        function NewConfiguration(){
-          // document.getElementById("configurationPopup").style.display = "inline";
-          ShowConfigurationPopup();
+          cmd = CreateJsonCommand("GetConfiguration")
+          cmd.ConfigurationName = document.getElementById("newBrew_ConfigSelect").value;
+          WebSocketClient(cmd,handleGetConfigurationAnswer)
         }
 
         function SetConfiguration(){
@@ -411,6 +409,16 @@ window.chartColors = {
           cmd.Configuration.StepsPerRevolution = document.getElementById("Configuration_StepsPerRevolution").value;
 
           WebSocketClient(cmd, handleSetOutputAnswer)
+        }
+
+        function OpenExistingConfiguration(){
+          GetConfiguration()
+          ShowConfigurationPopup();
+        }
+
+        function NewConfiguration(){
+          openedConfiguration = null
+          ShowConfigurationPopup();
         }
 
         function ShowConfigurationPopup(){
@@ -435,6 +443,13 @@ window.chartColors = {
             document.getElementById("Configuration_I").value    = openedConfiguration.I;
             document.getElementById("Configuration_D").value    = openedConfiguration.D;
             document.getElementById("Configuration_StepsPerRevolution").value = openedConfiguration.StepsPerRevolution;
+          }else{
+            document.getElementById("Configuration_Id").value   = '';
+            document.getElementById("Configuration_Name").value = '';
+            document.getElementById("Configuration_P").value    = '';
+            document.getElementById("Configuration_I").value    = '';
+            document.getElementById("Configuration_D").value    = '';
+            document.getElementById("Configuration_StepsPerRevolution").value = '';
           }
         }
 /**************************************************************************************/

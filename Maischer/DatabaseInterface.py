@@ -88,6 +88,15 @@ class DatabaseInterface():
     def getConfiguration(self, ConfigurationId):
         self.c.execute('''SELECT * FROM Configuration WHERE ConfigurationId = ?''',(ConfigurationId,))
         return self.c.fetchone()
+    
+    def getConfigurationByName(self, ConfigurationName):
+        self.c.execute('''SELECT * FROM Configuration WHERE ConfigurationName = ?''',(ConfigurationName,))
+        return self.c.fetchone()
+
+
+    def getConfigurationIdByName(self, ConfigurationName):
+        self.c.execute('''SELECT ConfigurationId FROM Configuration WHERE ConfigurationName = ?''',(ConfigurationName,))
+        return self.c.fetchone()['ConfigurationId']
 
     def getAllConfigurations(self):
         self.c.execute('''SELECT * FROM Configuration''')
@@ -267,28 +276,28 @@ class DatabaseInterface():
         brewage = self.c.fetchone()
         print('self.getConfiguration')
         configuration = self.getConfiguration(brewage['ConfigurationId'])
-        print('self.getMashing')
-        mashing = self.getMashing(brewage['MashingId'])
-        print('self.getSetPoints')
-        setpoints = self.getSetPoints(mashing['MashingId'])
-        setpoints = [dict(row) for row in setpoints]
+        # print('self.getMashing')
+        # mashing = self.getMashing(brewage['MashingId'])
+        # print('self.getSetPoints')
+        # setpoints = self.getSetPoints(mashing['MashingId'])
+        # setpoints = [dict(row) for row in setpoints]
         print (brewage)
         brewage = dict(brewage)
         print (brewage)
         del brewage['ConfigurationId']
-        print (brewage)
-        del brewage['MashingId']
+        # print (brewage)
+        # del brewage['MashingId']
         print (brewage)
         brewage['Configuration'] = dict(configuration)
         print (brewage)
-        brewage['Mashing'] = dict(mashing)
-        print (brewage)
+        # brewage['Mashing'] = dict(mashing)
+        # print (brewage)
 
-        print (brewage['Mashing'])        
-        print (setpoints)
-        brewage['Mashing']['SetPoints'] = setpoints
-        print ("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-        print (brewage)
+        # print (brewage['Mashing'])        
+        # print (setpoints)
+        # brewage['Mashing']['SetPoints'] = setpoints
+        # print ("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+        # print (brewage)
 
         #LEFT JOIN Configuration ON Brewages.ConfigurationId = Configuration.ID
         #LEFT JOIN Mashing ON Brewages.MashingId = Mashing.ID
