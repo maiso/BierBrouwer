@@ -212,6 +212,16 @@ window.chartColors = {
         function NewBrewage(){
           var handleNewBrewageAnswer = function (jsonobj) {
             addItemToSelectList(document.getElementById("BrewageList"),jsonobj['BrewName'])
+              var sel = document.getElementById('BrewageList');
+              var val = jsonobj['BrewName'];
+              for(var i = 0, j = sel.options.length; i < j; ++i) {
+                  if(sel.options[i].value === val) {
+                     sel.selectedIndex = i;
+                     break;
+                  }
+              }
+          
+
             OpenBrewage()
           }
           cmd = CreateJsonCommand("NewBrewage")
