@@ -1,6 +1,7 @@
 
 hmtl, body { 
-	min-height: 100%;
+	min-height: 100vh;
+	height: 100vh;
     max-width: 100%;
     overflow-x: hidden;
     /*overflow-y: hidden;*/
@@ -125,13 +126,15 @@ input[type=image]:disabled
 }
 #pbStartPID
 {
-	  float: right;
-
+  float: right;
+}
+#pbPauzePID
+{
+  float: right;
 }
 #pbStopPID
 {
-	  float: right;
-
+  float: right;
 }
 #tempControl{
 	width:400px;

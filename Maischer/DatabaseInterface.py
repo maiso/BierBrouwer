@@ -22,12 +22,13 @@ class DatabaseInterface():
         self.createHopMomentsTable()
         self.createBrewagesTable()
         self.createMeasurementsTable()
+        self.createActiveBrewTable()
 
     def createDefaultConfiguration(self):
         self.insertConfiguration("DefaultConfiguration",10,1,1,4096)    
 
     def createDefaultBrewage(self):
-        self.insertBrewage("TestBrew",str(datetime.datetime.now()),0,0,0,0,1,1)
+        self.insertBrewage("TestBrew",str(datetime.datetime.now()),"NotStarted",None,None,None,None,1,1)
 
     def createDefaultMashing(self):
       self.insertMashing("Amerikaanse IPA")
@@ -214,6 +215,35 @@ class DatabaseInterface():
         self.conn.commit()
 
 #########################################################################
+### ActiveBrew
+#########################################################################
+    def createActiveBrewTable(self):
+        self.c.execute('''
+            CREATE TABLE IF NOT EXISTS ActiveBrew(
+               BrewageId          INT,
+               FOREIGN KEY(BrewageId) REFERENCES Brewages(BrewageId)
+            );
+            ''')
+    def getActiveBrew(self):
+        self.c.execute('''SELECT * FROM ActiveBrew''')
+        activeBrew = None
+        try:
+          return self.c.fetchone()['BrewageId']
+        except:
+          return None
+         
+
+    def insertActiveBrew(self, BrewageId ):
+        self.c.execute('''
+            INSERT INTO ActiveBrew(BrewageId) VALUES(?);''', (BrewageId,))
+        self.conn.commit()      
+
+    def deleteActiveBrew(self, BrewageId ):
+        self.c.execute('''
+            DELETE FROM ActiveBrew WHERE BrewageId = ?;''', (BrewageId,))
+        self.conn.commit()     
+
+#########################################################################
 ### Brewages
 #########################################################################
     def createBrewagesTable(self):
@@ -222,21 +252,23 @@ class DatabaseInterface():
                BrewageId          INTEGER PRIMARY KEY AUTOINCREMENT,
                BrewName           TEXT  NOT NULL UNIQUE,
                BrewDate           TEXT  NOT NULL UNIQUE,
+               ControllerMode     TEXT,
                MashingStartTime   TEXT,
                MashingStopTime    TEXT,
                BoilingStartTime   TEXT,
                BoilingStopTime    TEXT,
-               ConfigurationId      INT,
+               ConfigurationId    INT,
                MashingId INT,
                FOREIGN KEY(ConfigurationId) REFERENCES Configuration(ConfigurationId),
                FOREIGN KEY(MashingId) REFERENCES Mashing(MashingId)
             );
             ''')
-    def insertBrewage(self, BrewName, BrewDate, MashingStartTime, MashingStopTime,BoilingStartTime, BoilingStopTime, ConfigurationId, MashingId):
+    def insertBrewage(self, BrewName, BrewDate, ControllerMode, MashingStartTime, MashingStopTime,BoilingStartTime, BoilingStopTime, ConfigurationId, MashingId):
         self.c.execute('''
             INSERT INTO Brewages(
                BrewName           ,
                BrewDate           ,
+               ControllerMode     ,
                MashingStartTime   ,
                MashingStopTime    ,
                BoilingStartTime   ,
@@ -244,9 +276,10 @@ class DatabaseInterface():
                ConfigurationId      ,
                MashingId
             )
-            VALUES(?,?,?,?,?,?,?,?);
+            VALUES(?,?,?,?,?,?,?,?,?);
             ''', (BrewName,
                 BrewDate,
+                ControllerMode,
                 MashingStartTime,
                 MashingStopTime,
                 BoilingStartTime,
@@ -257,6 +290,32 @@ class DatabaseInterface():
 
         self.c.execute('''SELECT BrewageId FROM Brewages WHERE BrewName = ?''',(BrewName,))
         return self.c.fetchone()['BrewageId']
+
+    def updateControllerMode(self,BrewageId, ControllerMode):
+        self.c.execute( ''' UPDATE Brewages SET ControllerMode = ? WHERE BrewageId = ?''', 
+                            (ControllerMode,BrewageId)
+                      )
+        self.conn.commit()
+
+    def getControllerModeById(self, BrewageId):
+        self.c.execute('''SELECT ControllerMode FROM Brewages WHERE BrewageId = ?''',(BrewageId,))
+        return self.c.fetchone()['ControllerMode']
+
+    def updateMashingStartTime(self,BrewageId, MashingStartTime):
+        self.c.execute( ''' UPDATE Brewages SET MashingStartTime = ? WHERE BrewageId = ?''', 
+                            (MashingStartTime,BrewageId)
+                      )
+        self.conn.commit()
+
+    def updateMashingStopTime(self,BrewageId, MashingStopTime):
+        self.c.execute( ''' UPDATE Brewages SET MashingStopTime = ? WHERE BrewageId = ?''', 
+                            (MashingStopTime,BrewageId)
+                      )
+        self.conn.commit()
+
+    def getBrewageNameById(self, BrewageId):
+        self.c.execute('''SELECT BrewName FROM Brewages WHERE BrewageId = ?''',(BrewageId,))
+        return self.c.fetchone()['BrewName']
 
     def getAllBrewages(self):
         self.c.execute('''SELECT BrewName FROM Brewages''')

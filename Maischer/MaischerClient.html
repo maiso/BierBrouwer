@@ -106,8 +106,9 @@ Configuration Popup
         </div>  
         <div id="userInputSection">   
           <div id="startStopHolder" class="controlHolder">
-            <input id="pbStartPID" class="btn" type="image" src="images/play_arrow_48px_352072.svg" onclick="StartRegelaar();" disabled/>
-            <input id="pbStopPID"  class="btn" type="image" src="images/stop_48px_352144.svg" onclick="StopRegelaar();" disabled/>
+            <input id="pbStartPID" class="btn" type="image" src="images/play_arrow_48px_352072.svg" onclick="ControllerStart();" disabled/>
+            <input id="pbPauzePID"  class="btn" type="image" src="images/pause_48px_352581.svg" onclick="ControllerPauze();" disabled/>            
+            <input id="pbStopPID"  class="btn" type="image" src="images/stop_48px_352144.svg" onclick="ControllerStop();" disabled/>
           </div>
           
           <div id="gaugeHolder" class="controlHolder">

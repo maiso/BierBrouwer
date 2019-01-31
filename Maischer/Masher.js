@@ -129,28 +129,41 @@ window.chartColors = {
           selectList.appendChild(option);
         }
 
+        function emptySelectListOptions(selectList)
+        {
+            var i;
+            for(i = selectList.options.length - 1 ; i >= 0 ; i--)
+            {
+                selectList.remove(i);
+            }
+        }
+
+        function insertAllMeasurements(jsonobj){
+            for (var i = 0; i < jsonobj.Measurments.length; i++) {
+              var measurment = jsonobj.Measurments[i]
+              insertDataInChart(measurment.MeasurementTime,measurment.Temperature,measurment.SetPoint,measurment.PIDOutput)
+            }
+            window.myLine.update();
+        }
 /**************************************************************************************/
 /*      Brewage Selection      */
 
         function GetActiveBrew(){
             var handleGetActiveBrewAnswer = function (jsonobj) {
-              if(jsonobj.ActiveBrew == false){
+              if(jsonobj['Brewage'] == null){
+                  //No active brewage found, show select popup
                   GetAvailableSettings();
                   document.getElementById("selectBrewagePopup").style.display = "inline";
-                  userControl(false);
-
+                  userControl(jsonobj.ControllerMode)
               } 
               else {
-                for (var i = 0; i < jsonobj.Measurments.length; i++) {
-                  var measurment = jsonobj.Measurments[i]
-                  insertDataInChart(measurment.MeasurementTime,measurment.Temperature,measurment.SetPoint,measurment.PIDOutput)
-                }
-                window.myLine.update();
+                //Found an active brewage, insert the measurments into the graph
+                insertAllMeasurements(jsonobj)
 
                 addItemToSelectList(document.getElementById("BrewageList"),jsonobj.Brewage);
 
                 OpenBrewage()
-                userControl(true);
+                userControl(jsonobj.ControllerMode)
               }
               document.getElementById("pbOpenBrewage").disabled = false;
               document.getElementById("loadingActiveBrewPopup").style.display = "none";
@@ -166,12 +179,14 @@ window.chartColors = {
             console.log(jsonobj);
             var selectList = document.getElementById("BrewageList");
              //Create and append the options
+             emptySelectListOptions(selectList)
              for (var i = 0; i < jsonobj.Brewages.length; i++) {
                 addItemToSelectList(document.getElementById("BrewageList"),jsonobj.Brewages[i]);
              }
 
              var selectList = document.getElementById("newBrew_ConfigSelect");
              //Create and append the options
+             emptySelectListOptions(selectList)
              for (var i = 0; i < jsonobj.Configurations.length; i++) {
                 addItemToSelectList(document.getElementById("newBrew_ConfigSelect"),jsonobj.Configurations[i]);
              }
@@ -192,6 +207,8 @@ window.chartColors = {
             openedConfiguration = jsonobj.Configuration
             ReloadConfiguration();
 
+            userControl(jsonobj.ControllerMode);
+
             document.getElementById("BrewageList").disabled = true;
             document.getElementById("pbOpenBrewage").disabled = true;
             document.getElementById("pbShowConfiguration").disabled = false;
@@ -199,7 +216,12 @@ window.chartColors = {
 
             document.getElementById("headerText").innerHTML = document.getElementById("BrewageList").value;
 
-            StartGetMeasurements();
+            if (jsonobj.ControllerMode != "Stopped"){
+              StartGetMeasurements();
+            }
+            else{
+              GetAllMeasurements();
+            }
           }
           var selectList = document.getElementById("BrewageList");
           var selectedDatabase = selectList.options[selectList.selectedIndex].text;
@@ -257,7 +279,9 @@ window.chartColors = {
             window.gauge.value = jsonobj.TemperatureProcessValue;
             window.gauge.update();
 
-            if (jsonobj.ActiveBrewing == true){
+            userControl(jsonobj.ControllerMode)
+            console.log(jsonobj); 
+            if (jsonobj.ControllerMode == "Started"){
                 insertDataInChart(new Date(Date.now()), jsonobj.TemperatureProcessValue,jsonobj.TemperatureSetPoint,jsonobj.OutputPV);
                 window.myLine.update();
               }
@@ -266,6 +290,16 @@ window.chartColors = {
           cmd = CreateJsonCommand("GetMeasurement")
           WebSocketClient(cmd,handleGetMeasurementAnswer)
         }
+
+        function GetAllMeasurements(){
+          var handleGetAllMeasurementsAnswer = function (jsonobj) {
+            insertAllMeasurements(jsonobj);
+          }
+          cmd = CreateJsonCommand("GetAllMeasurements")
+          WebSocketClient(cmd,handleGetAllMeasurementsAnswer)
+        }
+
+
 
         function SetpointInc(){
           console.log("SetpointInc"); 
@@ -331,35 +365,58 @@ window.chartColors = {
         }
 
         function userControl(activeMeasurment){
-          if (activeMeasurment){
-            document.getElementById("pbStopPID").disabled = false;
-            document.getElementById("pbStartPID").disabled = true;
-            document.getElementById("tempUp").disabled = false;
-            document.getElementById("tempDown").disabled = false;
-          }else{
-            document.getElementById("pbStopPID").disabled = true;
+          if (activeMeasurment == "NotStarted"){
             document.getElementById("pbStartPID").disabled = false;
-            document.getElementById("tempUp").disabled = true;
-            document.getElementById("tempDown").disabled = true;
+            document.getElementById("pbPauzePID").disabled = true;
+            document.getElementById("pbStopPID").disabled  = true;
+            document.getElementById("tempUp").disabled     = false;
+            document.getElementById("tempDown").disabled   = false;
+          }else if (activeMeasurment == "Started"){
+            document.getElementById("pbStartPID").disabled = true;
+            document.getElementById("pbPauzePID").disabled = false;
+            document.getElementById("pbStopPID").disabled  = false;
+            document.getElementById("tempUp").disabled     = false;
+            document.getElementById("tempDown").disabled   = false;
+          }else if (activeMeasurment == "Pauzed"){
+            document.getElementById("pbStartPID").disabled = false;
+            document.getElementById("pbPauzePID").disabled = true;
+            document.getElementById("pbStopPID").disabled  = false;
+            document.getElementById("tempUp").disabled     = false;
+            document.getElementById("tempDown").disabled   = false;
+          }else if (activeMeasurment == "Stopped"){
+            document.getElementById("pbStartPID").disabled = true;
+            document.getElementById("pbPauzePID").disabled = true;
+            document.getElementById("pbStopPID").disabled  = true;          
+            document.getElementById("tempUp").disabled     = true;
+            document.getElementById("tempDown").disabled   = true;
           }
         }
-        function StartRegelaar(){
-          var handleStartRegelaarAnswer = function (jsonobj) {
-            userControl(true);
+        function ControllerStart(){
+          var handleControllerStartAnswer = function (jsonobj) {
+            userControl(jsonobj.ControllerMode)
             StartGetMeasurements();
           }
-          cmd = CreateJsonCommand("StartStop")
-          cmd.Start = true
-          WebSocketClient(cmd,handleStartRegelaarAnswer)
+          cmd = CreateJsonCommand("ControllerMode")
+          cmd.Mode = "Start"
+          WebSocketClient(cmd,handleControllerStartAnswer)
         }
 
-        function StopRegelaar(){
-          var handleStopRegelaarAnswer = function (jsonobj) {
-            userControl(false);
+        function ControllerPauze(){
+          var handleControllerPauzeAnswer = function (jsonobj) {
+              userControl(jsonobj.ControllerMode)
           }
-          cmd = CreateJsonCommand("StartStop")
-          cmd.Start = false
-          WebSocketClient(cmd,handleStopRegelaarAnswer)
+          cmd = CreateJsonCommand("ControllerMode")
+          cmd.Mode = "Pauze"
+          WebSocketClient(cmd,handleControllerPauzeAnswer)
+        }
+
+        function ControllerStop(){
+          var handleControllerStopAnswer = function (jsonobj) {
+              userControl(jsonobj.ControllerMode)
+          }
+          cmd = CreateJsonCommand("ControllerMode")
+          cmd.Mode = "Stop"
+          WebSocketClient(cmd,handleControllerStopAnswer)
         }
 
         function WebSocketClient(jsonCommandToSend,messageHandler) {
@@ -437,6 +494,8 @@ window.chartColors = {
         }
         function SaveConfiguration(){
           SetConfiguration();
+          //GetAvailableSettings();
+          setTimeout(GetAvailableSettings, 100); 
           CloseConfiguration();
         }
 

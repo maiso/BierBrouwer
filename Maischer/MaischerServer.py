@@ -115,7 +115,8 @@ class MaischerServer():
             'GetConfiguration' : self.handleGetConfiguration,
             'SetConfiguration' : self.handleSetConfiguration,
             'GetMeasurement'   : self.handleGetMeasurement,
-            'StartStop'        : self.handleStartStop,
+            'GetAllMeasurements' : self.handleGetAllMeasurements,
+            'ControllerMode'   : self.handleControllerMode,
             'SetTemperature'   : self.handleSetTemperature,
             'SetMotorAngle'    : self.handleSetMotorAngle,
             'GetMotorAngle'    : self.handleGetMotorAngle,
@@ -136,11 +137,14 @@ class MaischerServer():
     
     def handleGetActiveBrew(self,parsed_json):
         jsonDict = self.commandOkJson(parsed_json['Command'])
-        jsonDict['ActiveBrew'] = self.regelaarActive
-        if self.regelaarActive:
-            jsonDict['Brewage'] = self.brewName
+        
+        self.brewageId = self.db.getActiveBrew()
+        if self.brewageId != None:
+            jsonDict['Brewage'] = self.db.getBrewageNameById(self.brewageId)
+            jsonDict["ControllerMode"] = self.db.getControllerModeById(self.brewageId)
             jsonDict['Measurments'] = self.db.getMeasurements(self.brewageId)
-
+        else:
+            jsonDict['Brewage'] = None
         return jsonDict
 
     def handleGetAvailableSettings(self, parsed_json):
@@ -163,7 +167,7 @@ class MaischerServer():
     def handleNewBrewage(self,parsed_json):
         newBrewage = parsed_json['Brewage']
         configId = self.db.getConfigurationIdByName(newBrewage['ConfigurationName'])
-        self.db.insertBrewage(newBrewage['BrewName'],str(datetime.datetime.now()),None,None,None,None,configId,None)
+        self.db.insertBrewage(newBrewage['BrewName'],str(datetime.datetime.now()),"NotStarted",None,None,None,None,configId,None)
         jsonDict = self.commandOkJson(parsed_json['Command'])
         jsonDict['BrewName'] = newBrewage['BrewName']
         return jsonDict
@@ -195,14 +199,19 @@ class MaischerServer():
 
     def handleGetMeasurement(self, parsed_json):
         jsonDict = self.commandOkJson(parsed_json['Command'])
-        measurement = { "ActiveBrewing"           : self.regelaarActive,
+        measurement = { "ControllerMode"          : self.db.getControllerModeById(self.brewageId),
                         "TemperatureSetPoint"     : str(self.TemperatureSetPoint),
                         "TemperatureProcessValue" : str(self.Temperature),
                         "OutputPV"                : str(self.outputPV)
                    }
         jsonDict = {**jsonDict, **measurement}
         return jsonDict
-
+    
+    def handleGetAllMeasurements(self, parsed_json):
+        jsonDict = self.commandOkJson(parsed_json['Command'])
+        jsonDict['Measurments'] = self.db.getMeasurements(self.brewageId)
+        return jsonDict
+        
     def handleGetConfiguration(self,parsed_json):
         jsonDict = self.commandOkJson(parsed_json['Command'])
         newConfig = self.db.getConfigurationByName(parsed_json['ConfigurationName'])
@@ -230,10 +239,32 @@ class MaischerServer():
         jsonDict = {**jsonDict, **newConfig}
         return jsonDict
 
-    def handleStartStop(self, parsed_json):
-        self.regelaarActive = parsed_json['Start']
+    def handleControllerMode(self, parsed_json):
         jsonDict = self.commandOkJson(parsed_json['Command'])
-        jsonDict["Start"] = self.regelaarActive
+        if parsed_json['Mode'] == "Start":
+            self.regelaarActive = True
+
+            if self.db.getControllerModeById(self.brewageId) == "NotStarted":
+                self.db.insertActiveBrew(self.brewageId)
+                self.db.updateMashingStartTime(self.brewageId,str(datetime.datetime.now()))
+            
+            self.db.updateControllerMode(self.brewageId, "Started")
+            jsonDict["ControllerMode"] = "Started"
+
+        elif parsed_json['Mode'] == "Pauze":
+            self.regelaarActive = False
+
+            self.db.updateControllerMode(self.brewageId, "Pauzed")
+            jsonDict["ControllerMode"] = "Pauzed"
+
+        elif parsed_json['Mode'] == "Stop":
+            self.regelaarActive = False
+
+            jsonDict["ControllerMode"] = "Stopped"
+            self.db.updateControllerMode(self.brewageId, "Stopped")
+            self.db.deleteActiveBrew(self.brewageId)
+            self.db.updateMashingStopTime(self.brewageId,str(datetime.datetime.now()))
+
         return jsonDict
 
     def handleSetMotorAngle(self, parsed_json):
