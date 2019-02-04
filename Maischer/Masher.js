@@ -406,8 +406,13 @@ window.chartColors = {
         }
         function ControllerStart(){
           var handleControllerStartAnswer = function (jsonobj) {
-            userControl(jsonobj.ControllerMode)
-            StartGetMeasurements();
+            if ( jsonobj.Result == 'Ok') {
+              userControl(jsonobj.ControllerMode);
+              StartGetMeasurements();
+            }else{
+              alert("Error:" + jsonobj.Message);
+            }
+            
           }
           cmd = CreateJsonCommand("ControllerMode")
           cmd.Mode = "Start"

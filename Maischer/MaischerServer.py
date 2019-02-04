@@ -124,6 +124,13 @@ class MaischerServer():
         jsonDict = { "Command" : command,
                      "Result"  : 'Ok'}
         return jsonDict
+
+
+    def commandErrorJson(self, command, error):
+        jsonDict = { "Command" : command,
+                     "Result"  : 'Error',
+                     "Message" : error }
+        return jsonDict        
     
     def handleGetActiveBrew(self,parsed_json):
         jsonDict = self.commandOkJson(parsed_json['Command'])
@@ -232,14 +239,19 @@ class MaischerServer():
     def handleControllerMode(self, parsed_json):
         jsonDict = self.commandOkJson(parsed_json['Command'])
         if parsed_json['Mode'] == "Start":
-            self.regelaarActive = True
 
-            if self.db.getControllerModeById(self.brewageId) == "NotStarted":
-                self.db.insertActiveBrew(self.brewageId)
-                self.db.updateMashingStartTime(self.brewageId,str(datetime.datetime.now()))
-            
-            self.db.updateControllerMode(self.brewageId, "Started")
-            jsonDict["ControllerMode"] = "Started"
+            if self.motor.zeroHasBeenSet == True and self.motor.maxHasBeenSet == True:
+                self.regelaarActive = True
+
+
+                if self.db.getControllerModeById(self.brewageId) == "NotStarted":
+                    self.db.insertActiveBrew(self.brewageId)
+                    self.db.updateMashingStartTime(self.brewageId,str(datetime.datetime.now()))
+                
+                self.db.updateControllerMode(self.brewageId, "Started")
+                jsonDict["ControllerMode"] = "Started"
+            else:
+                jsonDict = commandErrorJson(parsed_json['Command'],"Motor has not set zero or max")
 
         elif parsed_json['Mode'] == "Pauze":
             self.regelaarActive = False

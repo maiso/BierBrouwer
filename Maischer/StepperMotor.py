@@ -28,6 +28,8 @@ class StepperMotor():
 		self.currentStepNumber = 0
 		self.maxStepNumber = None
 		
+		self.zeroHasBeenSet = False
+		self.maxHasBeenSet  = False
 		if onPi:
 			GPIO.setmode(GPIO.BCM)
 			GPIO.setwarnings(False)
@@ -65,11 +67,13 @@ class StepperMotor():
 		print ('self.stepsPerDegree' + str(self.stepsPerDegree))
 
 	def zero(self):
+		self.zeroHasBeenSet = True
 		self.currentStepNumber = 0
 		self.angleSP = 0 
 		self.anglePV = 0
 
 	def max(self):
+		self.maxHasBeenSet = True
 		self.maxStepNumber = self.currentStepNumber
 
 	def setOutput(self,output):
