@@ -436,7 +436,7 @@ window.chartColors = {
           if ("WebSocket" in window) {
             // Let us open a web socket
             commandToSend = JSON.stringify(jsonCommandToSend);          
-            var ws = new WebSocket("ws://localhost:7654"); //192.168.178.21
+            var ws = new WebSocket("ws://"+window.location.hostname+":7654"); //192.168.178.21
             ws.onopen = function() {
               ws.send(commandToSend);
             };                   // Web Socket is connected, send data using send()

@@ -66,12 +66,14 @@ class StepperMotor():
 
 	def zero(self):
 		self.currentStepNumber = 0
-		self.maxStepNumber = None
 		self.angleSP = 0 
 		self.anglePV = 0
 
 	def max(self):
 		self.maxStepNumber = self.currentStepNumber
+
+    def setOutput(self,output):
+        self.angleSP = (self.maxStepNumber / 100) * output
 
 	def doStep(self,counterclockwise):
 		if counterclockwise == False:
@@ -98,4 +100,4 @@ class StepperMotor():
 			for ioPin in self.coilToPin:
 				if not ioPin in pinsHigh:
 					GPIO.output(ioPin,GPIO.LOW)
-		time.sleep(0.01)
+		time.sleep(0.003)

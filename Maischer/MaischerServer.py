@@ -50,12 +50,6 @@ class MaischerServer():
     def __del__(self):
         self.runGetTempThread = False
 
-    def setOutput(self,output):
-        step = float(self.MaxOutputAngle) - float(self.MinOutputAngle) 
-        step = step / 100
-        self.servoAngle = self.MinOutputAngle + (step * output)
-        valid = self.servo.setAngle(self.servoAngle) 
-
     def ReadDS18B20(self, sensorid):
         temp = 0
         try:
@@ -90,10 +84,8 @@ class MaischerServer():
 
                 self.PID_Output = self.pid.output
                 self.outputPV  = max(min( int(self.PID_Output), 100 ),0)
-                #if self.outputPV != prevOutputPv:
-                #    self.setOutput(self.outputPV)
-                #else:
-                #    self.servo.setAngle(0) # if it hasn't changed stop the trembling of the servo
+
+                self.motor.setOutput(self.outputPV)
 
                 dbInterface.insertMeasurement(self.brewageId,self.TemperatureSetPoint,self.Temperature,self.outputPV)
                 prevOutputPv = self.outputPV
