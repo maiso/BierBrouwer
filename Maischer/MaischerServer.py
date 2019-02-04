@@ -76,10 +76,10 @@ class MaischerServer():
         dbInterface = DatabaseInterface(databaseName)
 
         while(self.runGetTempThread):
-            #self.Temperature = self.ReadDS18B20("28-000008717fea")
-            self.Temperature = self.Temperature +1
-            if self.Temperature > self.TemperatureSetPoint:
-                self.Temperature = 0
+            self.Temperature = self.ReadDS18B20("28-000008717fea")
+            #self.Temperature = self.Temperature +1
+            #if self.Temperature > self.TemperatureSetPoint:
+            #    self.Temperature = 0
             if self.regelaarActive == True:
                 self.pid.setKp (self.P)
                 self.pid.setKi (self.I)

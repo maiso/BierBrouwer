@@ -60,11 +60,13 @@ class StepperMotor():
 	def setMotorConfig(self, stepsPerRevolution):
 		self.stepsPerRevolution = int(stepsPerRevolution) #((360/stepSize)*gearbox)
 		self.stepsPerDegree = round(stepsPerRevolution/360)
+		self.maxStepNumber = self.stepsPerRevolution * 360
 		print ('self.stepsPerRevolution' + str(self.stepsPerRevolution))
 		print ('self.stepsPerDegree' + str(self.stepsPerDegree))
 
 	def zero(self):
 		self.currentStepNumber = 0
+		self.maxStepNumber = None
 		self.angleSP = 0 
 		self.anglePV = 0
 

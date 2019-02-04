@@ -346,30 +346,35 @@ window.chartColors = {
 
         function GetMotorAngle(){
           var handleGetMotorAngleAnswer = function (jsonobj) {
-            document.getElementById("MotorAnglePV").value = jsonobj.Angle
+            document.getElementById("MotorAnglePV").value = jsonobj.Angle;
             if(document.getElementById("MotorAnglePV").value != document.getElementById("MotorAngleSP").value){
-              setTimeout(GetMotorAngle, 1000); //Clear the flag after 4 seconds
+              setTimeout(GetMotorAngle, 1000);
             }
           }
 
-          cmd = CreateJsonCommand("GetMotorAngle")
-          WebSocketClient(cmd,handleGetMotorAngleAnswer)
+          cmd = CreateJsonCommand("GetMotorAngle");
+          WebSocketClient(cmd,handleGetMotorAngleAnswer);
         }
 
         function ZeroMotorAngle(){
           var handleZeroMotorAngleAnswer = function (jsonobj) {
+            document.getElementById("MotorAngleSP").value = 0;
+            document.getElementById("pbMotorMax").disabled = false;
+            
+            GetMotorAngle();
           }
 
-          cmd = CreateJsonCommand("ZeroMotorAngle")
-          WebSocketClient(cmd,handleZeroMotorAngleAnswer)
+          cmd = CreateJsonCommand("ZeroMotorAngle");
+          WebSocketClient(cmd,handleZeroMotorAngleAnswer);
         }
 
         function MaxMotorAngle(){
           var handleMaxMotorAngleAnswer = function (jsonobj) {
+            GetMotorAngle();
           }
 
-          cmd = CreateJsonCommand("MaxMotorAngle")
-          WebSocketClient(cmd,handleMaxMotorAngleAnswer)
+          cmd = CreateJsonCommand("MaxMotorAngle");
+          WebSocketClient(cmd,handleMaxMotorAngleAnswer);
         }
 
         function userControl(activeMeasurment){

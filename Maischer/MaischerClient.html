@@ -85,9 +85,9 @@ Configuration Popup
                 Motor Angle: 
                 Process Value: <input readonly type="text" id="MotorAnglePV" value="0"> 
                 SetPoint     : <input type="number" step="1" id="MotorAngleSP" value="0">
-                <input type="submit" value="Submit"      onclick="SetMotorAngle();" />
-                <input type="submit" value="Set as Zero" onclick="ZeroMotorAngle();" />
-                <input type="submit" value="Set as Max"  onclick="MaxMotorAngle();" disabled/>
+                <input id="pbMotorSet"  type="submit" value="Submit"      onclick="SetMotorAngle();" />
+                <input id="pbMotorZero" type="submit" value="Set as Zero" onclick="ZeroMotorAngle();" />
+                <input id="pbMotorMax"  type="submit"  value="Set as Max" onclick="MaxMotorAngle();" disabled/>
             </div>
             <hr>
             <div>
