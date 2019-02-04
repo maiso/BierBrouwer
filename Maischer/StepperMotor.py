@@ -26,7 +26,7 @@ class StepperMotor():
 		self.anglePV = 0
 		self.angleSP = 0
 		self.currentStepNumber = 0
-		self.maxAngle = 360
+		self.maxStepNumber = None
 		
 		if onPi:
 			GPIO.setmode(GPIO.BCM)
@@ -45,7 +45,7 @@ class StepperMotor():
 
 	def run(self):
 		while(self.runMotorControlThread):
-			if self.angleSP != self.anglePV:
+			if self.angleSP != self.anglePV and self.maxStepNumber != None:
 				print('self.angleSP ' + str(self.angleSP) + ' self.anglePV ' + str(self.anglePV))
 				if self.angleSP > self.anglePV:
 					counterclockwise = False
@@ -69,16 +69,17 @@ class StepperMotor():
 		self.anglePV = 0
 
 	def max(self):
-		self.maxAngle = self.currentStepNumber = 0
+		self.maxStepNumber = self.currentStepNumber
 
 	def doStep(self,counterclockwise):
 		if counterclockwise == False:
-			self.currentStepNumber = self.currentStepNumber + 1
+			self.currentStepNumber = min(self.currentStepNumber + 1, self.maxStepNumber)
+
 			self.currentStepSequence = self.currentStepSequence + 1
 			if self.currentStepSequence > (len(self.steps) -1):
 				self.currentStepSequence = 0
 		else:
-			self.currentStepNumber = self.currentStepNumber - 1
+			self.currentStepNumber = max(self.currentStepNumber - 1,0)
 			self.currentStepSequence = self.currentStepSequence - 1
 			if self.currentStepSequence < 0:
 				self.currentStepSequence =  (len(self.steps) -1)

@@ -364,6 +364,14 @@ window.chartColors = {
           WebSocketClient(cmd,handleZeroMotorAngleAnswer)
         }
 
+        function MaxMotorAngle(){
+          var handleMaxMotorAngleAnswer = function (jsonobj) {
+          }
+
+          cmd = CreateJsonCommand("MaxMotorAngle")
+          WebSocketClient(cmd,handleMaxMotorAngleAnswer)
+        }
+
         function userControl(activeMeasurment){
           if (activeMeasurment == "NotStarted"){
             document.getElementById("pbStartPID").disabled = false;
