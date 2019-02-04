@@ -14,14 +14,15 @@ class StepperMotor():
 
 		self.coilToPin = [14,15,23,24]
 		self.steps = [ 
-				[0]   ,		#Coil 0 only
-				[0,1] ,     #Coil 0 & 1
-				[1]   ,
-				[1,2] ,
-				[2]   ,
-				[2,3] ,
+				[3,0] ,
 				[3]   ,
-				[3,0] ]
+				[2,3] ,
+				[2]   ,
+				[1,2] ,				
+				[1]   ,
+				[0,1] ,     #Coil 0 & 1
+				[0]   ,		#Coil 0 only
+				]
 		self.currentStepSequence = 0
 		self.anglePV = 0
 		self.angleSP = 0
@@ -83,7 +84,7 @@ class StepperMotor():
 		self.angleSP = round((maxAngle / 100) * output)
 
 	def doStep(self,counterclockwise):
-		if counterclockwise == False:
+		if counterclockwise == True:
 			self.currentStepNumber = min(self.currentStepNumber + 1, self.maxStepNumber)
 
 			self.currentStepSequence = self.currentStepSequence + 1
