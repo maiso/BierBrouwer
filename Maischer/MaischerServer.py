@@ -36,7 +36,7 @@ class MaischerServer():
         self.PID_Output = 0
         self.outputPV = 0
         self.regelaarActive = False
-
+        self.prevOutputPV = 0
         self.pid = PID.PID(self.P, self.I, self.D)
         self.pid.setSampleTime(1)
 
@@ -84,9 +84,11 @@ class MaischerServer():
                 self.PID_Output = self.pid.output
                 self.outputPV  = max(min( int(self.PID_Output), 100 ),0)
 
-                self.motor.setOutput(self.outputPV)
+                if self.prevOutputPV != self.outputPV:
+                    self.motor.setOutput(self.outputPV) # Only change motor when changed
 
                 dbInterface.insertMeasurement(self.brewageId,self.TemperatureSetPoint,self.Temperature,self.outputPV)
+                self.prevOutputPV = self.outputPV 
 #                print ( "Target: %.1f C | Current: %.1f C | OutputPV: %d" % (self.TemperatureSetPoint, self.Temperature, self.outputPV))
             time.sleep(1)
 
