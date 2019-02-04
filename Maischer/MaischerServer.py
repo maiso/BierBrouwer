@@ -251,7 +251,7 @@ class MaischerServer():
                 self.db.updateControllerMode(self.brewageId, "Started")
                 jsonDict["ControllerMode"] = "Started"
             else:
-                jsonDict = commandErrorJson(parsed_json['Command'],"Motor has not set zero or max")
+                jsonDict = self.commandErrorJson(parsed_json['Command'],"Motor has not set zero or max")
 
         elif parsed_json['Mode'] == "Pauze":
             self.regelaarActive = False
