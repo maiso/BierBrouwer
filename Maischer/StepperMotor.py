@@ -73,7 +73,10 @@ class StepperMotor():
 		self.maxStepNumber = self.currentStepNumber
 
 	def setOutput(self,output):
-		self.angleSP = (self.maxStepNumber / 100) * output
+		if output > 100:
+			output = 100
+		maxAngle = round(self.maxStepNumber / self.stepsPerDegree)
+		self.angleSP = (maxAngle / 100) * output
 
 	def doStep(self,counterclockwise):
 		if counterclockwise == False:

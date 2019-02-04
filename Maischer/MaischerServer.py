@@ -29,7 +29,6 @@ class MaischerServer():
         # self.db.createDefaultMashing()
         # self.db.createDefaultBrewage()
 
-
         self.P = 10
         self.I = 1
         self.D = 1
@@ -88,7 +87,6 @@ class MaischerServer():
                 self.motor.setOutput(self.outputPV)
 
                 dbInterface.insertMeasurement(self.brewageId,self.TemperatureSetPoint,self.Temperature,self.outputPV)
-                prevOutputPv = self.outputPV
 #                print ( "Target: %.1f C | Current: %.1f C | OutputPV: %d" % (self.TemperatureSetPoint, self.Temperature, self.outputPV))
             time.sleep(1)
 
