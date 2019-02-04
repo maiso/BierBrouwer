@@ -52,7 +52,7 @@ class MaischerServer():
     def ReadDS18B20(self, sensorid):
         temp = 0
         try:
-            tfile = open("/sys/bus/w1/devices/"+ sensorid +"/w1_slave") #RPi 2,3 met nieuwe kernel.
+            tfile = open("/sys/bus/w1/devices/"+ sensorid +"/w1_slave")
             text = tfile.read()
             tfile.close()
         
@@ -70,9 +70,7 @@ class MaischerServer():
 
         while(self.runGetTempThread):
             self.Temperature = self.ReadDS18B20("28-000008717fea")
-            #self.Temperature = self.Temperature +1
-            #if self.Temperature > self.TemperatureSetPoint:
-            #    self.Temperature = 0
+
             if self.regelaarActive == True:
                 self.pid.setKp (self.P)
                 self.pid.setKi (self.I)
@@ -115,12 +113,16 @@ class MaischerServer():
             'ZeroMotorAngle'   : self.handleZeroMotorAngle,
             'MaxMotorAngle'    : self.handleMaxMotorAngle,
         }
-        #try:
-        result_json = commandHandlers[parsed_json['Command']](parsed_json)
+        result_json = None
+        try:
+            result_json = commandHandlers[parsed_json['Command']](parsed_json)
+        except Exception as e:
+            print('Exception :' + str(e))        
+            result_json = self.commandErrorJson(parsed_json['Command'], str(e))
+            
         print("Sending to client: " + str(result_json))
         yield from websocket.send(json.dumps(result_json))
-     #   except Exception as e:
-      #      print('Exception :' + str(e))
+
 
     def commandOkJson(self, command):
         jsonDict = { "Command" : command,
